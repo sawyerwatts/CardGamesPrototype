@@ -4,6 +4,8 @@ using System.Text;
 
 namespace CardGamesPrototype.Lib;
 
+// TODO: make a Dealer for the deck so can more conventionally inject/mock rng?
+
 // TODO: Chimera would be a fun one to implement
 //      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
 //      have a deal func that knows how many hands to deal to, and the optional max capacity of those hands? and/or a priority of the hands to deal to?
@@ -26,14 +28,6 @@ public partial class Deck(IEnumerable<Card>? seed = null) : IList<Deck.CardState
         public static readonly Specification Standard52CardDeck = new();
 
         public bool IncludeJokers { get; init; } = false;
-    }
-
-    public static Deck MakeShuffleCut(Specification? spec = null)
-    {
-        var deck = Make(spec);
-        deck.Shuffle();
-        deck.Cut();
-        return deck;
     }
 
     public static Deck Make(Specification? spec = null)
@@ -107,17 +101,26 @@ public partial class Deck(IEnumerable<Card>? seed = null) : IList<Deck.CardState
         return deck;
     }
 
-    public virtual void Shuffle()
+    /// <summary>
+    /// This will perform an in-place shuffle of the <see cref="Deck"/> instance.
+    /// </summary>
+    /// <returns></returns>
+    public virtual Deck Shuffle()
     {
         RandomNumberGenerator.Shuffle(CollectionsMarshal.AsSpan(_cards));
+        return this;
     }
 
-    public virtual void Cut(int minNumCardsFromEdges = 1)
+    /// <summary>
+    /// This will perform an in-place cut of the <see cref="Deck"/> instance.
+    /// </summary>
+    /// <returns></returns>
+    public virtual Deck Cut(int minNumCardsFromEdges = 1)
     {
         if (minNumCardsFromEdges < 1)
             throw new ArgumentException($"{nameof(minNumCardsFromEdges)} must be positive, but was given {minNumCardsFromEdges}");
         if (this.Count < 2)
-            return;
+            return this;
 
         int newTopCardIndex;
         try
@@ -137,6 +140,7 @@ public partial class Deck(IEnumerable<Card>? seed = null) : IList<Deck.CardState
         newCards.AddRange(cardsAboveCut);
         newCards.AddRange(cardsBelowAndAtCut);
         _cards = newCards;
+        return this;
     }
 
     /// <inheritdoc cref="RandomNumberGenerator.GetInt32(int,int)"/>

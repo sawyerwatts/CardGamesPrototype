@@ -2,8 +2,6 @@ using CardGamesPrototype.Lib;
 
 namespace CardGamesPrototype.UnitTests;
 
-// TODO: make a Dealer for the deck so can more conventionally inject/mock rng?
-
 public class DeckTests
 {
     [Fact]
