@@ -30,6 +30,12 @@ public partial class Deck(IEnumerable<Card>? seed = null) : IList<Deck.CardState
         public bool IncludeJokers { get; init; } = false;
     }
 
+    /// <summary>
+    /// This makes a deck per the supplied <paramref name="spec"/> (or the default if not supplied). This will not
+    /// <see cref="Shuffle"/> or <see cref="Cut"/> the deck.
+    /// </summary>
+    /// <param name="spec"></param>
+    /// <returns></returns>
     public static Deck Make(Specification? spec = null)
     {
         spec ??= Specification.Standard52CardDeck;
@@ -167,5 +173,22 @@ public partial class Deck(IEnumerable<Card>? seed = null) : IList<Deck.CardState
 
         builder.Append(']');
         return builder.ToString();
+    }
+
+    public bool Matches(Deck other)
+    {
+        if (ReferenceEquals(this, other))
+            return true;
+        if (Count != other.Count)
+            return false;
+        for (int i = 0; i < this.Count; i++)
+        {
+            CardState thisCardState = this[i];
+            CardState otherCardState = other[i];
+            if (thisCardState != otherCardState)
+                return false;
+        }
+
+        return true;
     }
 }
