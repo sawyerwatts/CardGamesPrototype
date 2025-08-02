@@ -4,7 +4,7 @@ namespace CardGamesPrototype.Lib;
 
 public partial class Deck
 {
-    public IEnumerator<Card> GetEnumerator()
+    public IEnumerator<CardState> GetEnumerator()
     {
         return _cards.GetEnumerator();
     }
@@ -14,7 +14,7 @@ public partial class Deck
         return ((IEnumerable)_cards).GetEnumerator();
     }
 
-    public void Add(Card item)
+    public void Add(CardState item)
     {
         _cards.Add(item);
     }
@@ -24,31 +24,31 @@ public partial class Deck
         _cards.Clear();
     }
 
-    public bool Contains(Card item)
+    public bool Contains(CardState item)
     {
         return _cards.Contains(item);
     }
 
-    public void CopyTo(Card[] array, int arrayIndex)
+    public void CopyTo(CardState[] array, int arrayIndex)
     {
         _cards.CopyTo(array, arrayIndex);
     }
 
-    public bool Remove(Card item)
+    public bool Remove(CardState item)
     {
         return _cards.Remove(item);
     }
 
     public int Count => _cards.Count;
 
-    public bool IsReadOnly => ((ICollection<Card>)_cards).IsReadOnly;
+    public bool IsReadOnly => ((ICollection<CardState>)_cards).IsReadOnly;
 
-    public int IndexOf(Card item)
+    public int IndexOf(CardState item)
     {
         return _cards.IndexOf(item);
     }
 
-    public void Insert(int index, Card item)
+    public void Insert(int index, CardState item)
     {
         _cards.Insert(index, item);
     }
@@ -58,7 +58,7 @@ public partial class Deck
         _cards.RemoveAt(index);
     }
 
-    public Card this[int index]
+    public CardState this[int index]
     {
         get => _cards[index];
         set => _cards[index] = value;

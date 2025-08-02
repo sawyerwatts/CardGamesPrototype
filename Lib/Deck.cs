@@ -4,8 +4,7 @@ using System.Text;
 
 namespace CardGamesPrototype.Lib;
 
-// TODO: a future enhancement, like for Chimera, would be to store if the card is face up or face down
-//      could prob also have a flip method to reverse the items in the list and change the face up bool
+// TODO: Chimera would be a fun one to implement
 //      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
 //      have a deal func that knows how many hands to deal to, and the optional max capacity of those hands? and/or a priority of the hands to deal to?
 
@@ -13,9 +12,14 @@ namespace CardGamesPrototype.Lib;
 /// It is intended that the deck's index counts upwards, so deck[0] is the bottom card of the deck.
 /// </remarks>
 /// <param name="seed"></param>
-public partial class Deck(IEnumerable<Card>? seed = null) : IList<Card>
+public partial class Deck(IEnumerable<Card>? seed = null) : IList<Deck.CardState>
 {
-    private List<Card> _cards = new List<Card>(seed ?? []);
+    private List<CardState> _cards = new(seed?.Select(card => new CardState(card)) ?? []);
+
+    public sealed record CardState(Card Card)
+    {
+        public bool IsFaceUp { get; set; } = false;
+    }
 
     public sealed record Specification
     {
@@ -37,67 +41,67 @@ public partial class Deck(IEnumerable<Card>? seed = null) : IList<Card>
         spec ??= Specification.Standard52CardDeck;
         var deck = new Deck()
         {
-            AceOfHearts.Instance,
-            TwoOfHearts.Instance,
-            ThreeOfHearts.Instance,
-            FourOfHearts.Instance,
-            FiveOfHearts.Instance,
-            SixOfHearts.Instance,
-            SevenOfHearts.Instance,
-            EightOfHearts.Instance,
-            NineOfHearts.Instance,
-            TenOfHearts.Instance,
-            JackOfHearts.Instance,
-            QueenOfHearts.Instance,
-            KingOfHearts.Instance,
+            new CardState(AceOfHearts.Instance),
+            new CardState(TwoOfHearts.Instance),
+            new CardState(ThreeOfHearts.Instance),
+            new CardState(FourOfHearts.Instance),
+            new CardState(FiveOfHearts.Instance),
+            new CardState(SixOfHearts.Instance),
+            new CardState(SevenOfHearts.Instance),
+            new CardState(EightOfHearts.Instance),
+            new CardState(NineOfHearts.Instance),
+            new CardState(TenOfHearts.Instance),
+            new CardState(JackOfHearts.Instance),
+            new CardState(QueenOfHearts.Instance),
+            new CardState(KingOfHearts.Instance),
 
-            AceOfSpades.Instance,
-            TwoOfSpades.Instance,
-            ThreeOfSpades.Instance,
-            FourOfSpades.Instance,
-            FiveOfSpades.Instance,
-            SixOfSpades.Instance,
-            SevenOfSpades.Instance,
-            EightOfSpades.Instance,
-            NineOfSpades.Instance,
-            TenOfSpades.Instance,
-            JackOfSpades.Instance,
-            QueenOfSpades.Instance,
-            KingOfSpades.Instance,
+            new CardState(AceOfSpades.Instance),
+            new CardState(TwoOfSpades.Instance),
+            new CardState(ThreeOfSpades.Instance),
+            new CardState(FourOfSpades.Instance),
+            new CardState(FiveOfSpades.Instance),
+            new CardState(SixOfSpades.Instance),
+            new CardState(SevenOfSpades.Instance),
+            new CardState(EightOfSpades.Instance),
+            new CardState(NineOfSpades.Instance),
+            new CardState(TenOfSpades.Instance),
+            new CardState(JackOfSpades.Instance),
+            new CardState(QueenOfSpades.Instance),
+            new CardState(KingOfSpades.Instance),
 
-            AceOfDiamonds.Instance,
-            TwoOfDiamonds.Instance,
-            ThreeOfDiamonds.Instance,
-            FourOfDiamonds.Instance,
-            FiveOfDiamonds.Instance,
-            SixOfDiamonds.Instance,
-            SevenOfDiamonds.Instance,
-            EightOfDiamonds.Instance,
-            NineOfDiamonds.Instance,
-            TenOfDiamonds.Instance,
-            JackOfDiamonds.Instance,
-            QueenOfDiamonds.Instance,
-            KingOfDiamonds.Instance,
+            new CardState(AceOfDiamonds.Instance),
+            new CardState(TwoOfDiamonds.Instance),
+            new CardState(ThreeOfDiamonds.Instance),
+            new CardState(FourOfDiamonds.Instance),
+            new CardState(FiveOfDiamonds.Instance),
+            new CardState(SixOfDiamonds.Instance),
+            new CardState(SevenOfDiamonds.Instance),
+            new CardState(EightOfDiamonds.Instance),
+            new CardState(NineOfDiamonds.Instance),
+            new CardState(TenOfDiamonds.Instance),
+            new CardState(JackOfDiamonds.Instance),
+            new CardState(QueenOfDiamonds.Instance),
+            new CardState(KingOfDiamonds.Instance),
 
-            AceOfClubs.Instance,
-            TwoOfClubs.Instance,
-            ThreeOfClubs.Instance,
-            FourOfClubs.Instance,
-            FiveOfClubs.Instance,
-            SixOfClubs.Instance,
-            SevenOfClubs.Instance,
-            EightOfClubs.Instance,
-            NineOfClubs.Instance,
-            TenOfClubs.Instance,
-            JackOfClubs.Instance,
-            QueenOfClubs.Instance,
-            KingOfClubs.Instance,
+            new CardState(AceOfClubs.Instance),
+            new CardState(TwoOfClubs.Instance),
+            new CardState(ThreeOfClubs.Instance),
+            new CardState(FourOfClubs.Instance),
+            new CardState(FiveOfClubs.Instance),
+            new CardState(SixOfClubs.Instance),
+            new CardState(SevenOfClubs.Instance),
+            new CardState(EightOfClubs.Instance),
+            new CardState(NineOfClubs.Instance),
+            new CardState(TenOfClubs.Instance),
+            new CardState(JackOfClubs.Instance),
+            new CardState(QueenOfClubs.Instance),
+            new CardState(KingOfClubs.Instance),
         };
 
         if (spec.IncludeJokers)
         {
-            deck.Add(Joker0.Instance);
-            deck.Add(Joker1.Instance);
+            deck.Add(new CardState(Joker0.Instance));
+            deck.Add(new CardState(Joker1.Instance));
         }
 
         return deck;
@@ -127,11 +131,11 @@ public partial class Deck(IEnumerable<Card>? seed = null) : IList<Card>
             throw new ArgumentException($"The deck is too small to cut while not cutting the top or bottom {minNumCardsFromEdges}");
         }
 
-        IEnumerable<Card> belowAndAtCards = _cards.Take(newTopCardIndex+1);
-        IEnumerable<Card> aboveCards = _cards.Skip(newTopCardIndex+1);
-        List<Card> newCards = new(capacity: _cards.Capacity);
-        newCards.AddRange(aboveCards);
-        newCards.AddRange(belowAndAtCards);
+        IEnumerable<CardState> cardsBelowAndAtCut = _cards.Take(newTopCardIndex+1);
+        IEnumerable<CardState> cardsAboveCut = _cards.Skip(newTopCardIndex+1);
+        List<CardState> newCards = new(capacity: _cards.Count);
+        newCards.AddRange(cardsAboveCut);
+        newCards.AddRange(cardsBelowAndAtCut);
         _cards = newCards;
     }
 
