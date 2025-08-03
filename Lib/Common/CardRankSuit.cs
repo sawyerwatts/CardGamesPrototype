@@ -1,4 +1,4 @@
-namespace CardGamesPrototype.Lib;
+namespace CardGamesPrototype.Lib.Common;
 
 public abstract record Card(Rank Rank, Suit Suit)
 {

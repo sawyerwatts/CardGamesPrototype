@@ -1,5 +1,7 @@
 using System.Diagnostics;
 
+using CardGamesPrototype.Lib.Common;
+
 using Microsoft.Extensions.Logging;
 
 namespace CardGamesPrototype.Lib.Games;
@@ -75,21 +77,37 @@ public sealed class HeartsGame : IGame
         CircularCounter cardPassingDirection = new(4, startAtEnd: true);
         while (_playerStates.All(player => player.Score < 100))
         {
-            PassDirection passDirection = (PassDirection)cardPassingDirection.Tick();
-            await SetupRound(passDirection, cancellationToken);
+            await SetupRound((PassDirection)cardPassingDirection.Tick(), cancellationToken);
 
-            int iStartPlayer = _playerStates.FindIndex(playerState =>
+            int iCurrPlayer = _playerStates.FindIndex(playerState =>
                 playerState.Player.PeakCards.Contains(TwoOfClubs.Instance));
-            if (iStartPlayer == -1)
-                throw new InvalidOperationException($"Could not find a player with the {nameof(TwoOfClubs)}");
+            if (iCurrPlayer == -1)
+                throw new InvalidOperationException(
+                    $"Could not find a player with the {nameof(TwoOfClubs)}");
 
-            // the player with 2clubs starts the first trick, and no points can be played this trick
+            // TODO: pointing/specification design
+            //      have a HeartsDeck w/ HeartsCard
+            //      then use IDealer to shuffle/cut/deal that deck
+            //      and manage the hands internally
+            //      and use Player to communicate with players via here's your whole hand, choose one of these cards
+            //      also have DeckHandTrick.cs? or just use lists?
+
+            // TODO: play first trick
+            //      no points can be played this trick!
+            //          how attribute points?
+            //          need a HeartsCard type w/ points?
+            //          use linq to inject the valid cards that could be specified?
+            //              Player would basically just become IPlayer
             //      may need to *actually* implement the Spec pattern since points are game-specific
-            //          unless willing to have game bounce selection back to player?
-            // play tricks until everyone runs out of cards
-            //      hearts cannot be lead until broken!
-            // count points accrued in tricks (watch out for shooting the moon!)
-            // if no winner, play another round
+            //          unless willing to have game bounce selection back to human player?
+
+            while (_playerStates[0].Player.PeakCards.Count > 0)
+            {
+                // TODO: play a trick and update iCurrPlayer to trick taker
+                //      hearts cannot be lead until broken!
+            }
+
+            // TODO: count points accrued in tricks (watch out for shooting the moon!)
         }
 
         _logger.LogInformation("Completed a game of Hearts");

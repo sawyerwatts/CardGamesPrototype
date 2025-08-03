@@ -1,6 +1,6 @@
-using CardGamesPrototype.Lib;
+using CardGamesPrototype.Lib.Common;
 
-namespace CardGamesPrototype.UnitTests;
+namespace CardGamesPrototype.UnitTests.Common;
 
 public class DeckMock(IEnumerable<Card>? seed = null) : Deck(seed)
 {

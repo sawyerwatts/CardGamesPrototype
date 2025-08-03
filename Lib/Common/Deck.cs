@@ -2,7 +2,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace CardGamesPrototype.Lib;
+namespace CardGamesPrototype.Lib.Common;
 
 /// <remarks>
 /// It is intended that the deck's index counts upwards, so deck[0] is the bottom card of the deck.

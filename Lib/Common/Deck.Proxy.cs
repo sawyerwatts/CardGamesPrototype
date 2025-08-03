@@ -1,6 +1,6 @@
 using System.Collections;
 
-namespace CardGamesPrototype.Lib;
+namespace CardGamesPrototype.Lib.Common;
 
 public partial class Deck
 {
