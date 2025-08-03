@@ -52,9 +52,9 @@ public sealed class HeartsGame : IGame
             _playerStates.Add(new PlayerState(player));
     }
 
-    private static readonly Player.RemoveCardsSpec PlayerSpecRemove3Cards = new(
+    private static readonly Lazy<Player.RemoveCardsSpec> PlayerSpecRemove3Cards = new(() => new Player.RemoveCardsSpec(
         MinCardsToRemove: 3,
-        MaxCardsToRemove: 3);
+        MaxCardsToRemove: 3));
 
     public async Task Play(CancellationToken cancellationToken)
     {
@@ -98,7 +98,7 @@ public sealed class HeartsGame : IGame
         for (int i = 0; i < NumPlayers; i++)
         {
             Task<List<Card>> task = _playerStates[i].Player
-                .RemoveCards(PlayerSpecRemove3Cards, cancellationToken);
+                .RemoveCards(PlayerSpecRemove3Cards.Value, cancellationToken);
             takeCardsFromPlayerTasks.Add(task);
         }
 
