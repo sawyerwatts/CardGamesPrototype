@@ -4,8 +4,21 @@ using Microsoft.Extensions.Logging;
 
 namespace CardGamesPrototype.Lib.Games;
 
+// TODO: make a Dealer for the deck so can more conventionally inject/mock rng? and inject deck into dealer?
+//      and so could log w/o method injection?
+
+// TODO: Chimera would be a fun one to implement
+//      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
+//      have a deal func that knows how many hands to deal to, and the optional max capacity of those hands? and/or a priority of the hands to deal to?
+
+// TODO: make a separate IPlayerInterface and leave this as purely concrete
+
+// TODO: a player name would be cool too
+
+// TODO: put try/catch inside game whileLoop so if any excs occur, can continue the game?
+
 // TODO: have a Players : IList<Player> w/ a method to concurrently apply op to all players?
-//      have func to play out trick, starting with specific player?
+//      have func to play out trick/op, starting with a specific player?
 
 // TODO: have a hand funcs? order by rank then suit, and order by suit then rank
 //      ace low vs high
@@ -33,7 +46,7 @@ public sealed class HeartsGame : IGame
         Left = 0,
         Right = 1,
         Across = 2,
-        Hold = 3,
+        Hold = 3
     }
 
     private const int NumPlayers = 4;
@@ -41,7 +54,7 @@ public sealed class HeartsGame : IGame
 
     private readonly ILogger<HeartsGame> _logger;
 
-    public HeartsGame(ILogger<HeartsGame> logger, List<Player> players)
+    private HeartsGame(ILogger<HeartsGame> logger, List<Player> players)
     {
         _logger = logger;
         if (players.Count != NumPlayers)
@@ -65,13 +78,17 @@ public sealed class HeartsGame : IGame
             PassDirection passDirection = (PassDirection)cardPassingDirection.Tick();
             await SetupRound(passDirection, cancellationToken);
 
-            // the player with 2clubs starts the first trick
-            //      no points can be played this trick!
-            //          may need to *actually* implement the Spec pattern since points are game-specific
+            int iStartPlayer = _playerStates.FindIndex(playerState =>
+                playerState.Player.PeakCards.Contains(TwoOfClubs.Instance));
+            if (iStartPlayer == -1)
+                throw new InvalidOperationException($"Could not find a player with the {nameof(TwoOfClubs)}");
+
+            // the player with 2clubs starts the first trick, and no points can be played this trick
+            //      may need to *actually* implement the Spec pattern since points are game-specific
             //          unless willing to have game bounce selection back to player?
             // play tricks until everyone runs out of cards
             //      hearts cannot be lead until broken!
-            // count points accrued (watch out for shooting the moon!)
+            // count points accrued in tricks (watch out for shooting the moon!)
             // if no winner, play another round
         }
 
@@ -82,7 +99,7 @@ public sealed class HeartsGame : IGame
     {
         _logger.LogInformation("Shuffling, cutting, and dealing the deck to {NumPlayers}",
             NumPlayers);
-        List<Deck> hands = Deck.Make().Shuffle().Cut().Deal(NumPlayers);
+        List<Deck> hands = Deck.Make().Shuffle().Cut().Deal(NumPlayers); // TODO: this makes testing real hard (see top for more)
         for (int i = 0; i < NumPlayers; i++)
             await _playerStates[i].Player.SetHand(hands[i].GetCards(), cancellationToken);
 

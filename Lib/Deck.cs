@@ -4,13 +4,6 @@ using System.Text;
 
 namespace CardGamesPrototype.Lib;
 
-// TODO: make a Dealer for the deck so can more conventionally inject/mock rng? and inject deck into dealer?
-//      and so could log w/o method injection?
-
-// TODO: Chimera would be a fun one to implement
-//      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
-//      have a deal func that knows how many hands to deal to, and the optional max capacity of those hands? and/or a priority of the hands to deal to?
-
 /// <remarks>
 /// It is intended that the deck's index counts upwards, so deck[0] is the bottom card of the deck.
 /// </remarks>
