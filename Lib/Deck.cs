@@ -171,7 +171,7 @@ public partial class Deck(IEnumerable<Card>? seed = null) : IList<Deck.CardState
         foreach (CardState currCard in this)
         {
             hands[iCurrHand.N].Add(currCard);
-            iCurrHand.Increment();
+            iCurrHand.Tick();
         }
 
         return hands;

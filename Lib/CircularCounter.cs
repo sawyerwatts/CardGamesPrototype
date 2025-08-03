@@ -1,31 +1,64 @@
+using System.Diagnostics;
+
 namespace CardGamesPrototype.Lib;
 
-public sealed class CircularCounter
+public record struct CircularCounter
 {
-    public int N { get; private set; } = 0;
+    public int N { get; private set; }
     private readonly int _maxExclusive;
 
-    public CircularCounter(int maxExclusive)
+    public CircularCounter() => throw new NotImplementedException();
+
+    public CircularCounter(int maxExclusive, bool startAtEnd = false)
     {
         if (maxExclusive < 0)
             throw new ArgumentException(
                 $"A non-negative {nameof(maxExclusive)} is required but given {maxExclusive}");
         _maxExclusive = maxExclusive;
+
+        if (startAtEnd)
+            N = _maxExclusive - 1;
     }
 
-    public int Increment(int addition = 1)
+    public CircularCounter(int seed, int maxExclusive)
     {
-        if (addition < 0)
+        if (maxExclusive < 0)
             throw new ArgumentException(
-                $"{nameof(Increment)} expects a non-negative {nameof(addition)} but given {addition}");
-        for (int i = 0; i < addition; i++)
+                $"A non-negative {nameof(maxExclusive)} is required but given {maxExclusive}");
+        _maxExclusive = maxExclusive;
+
+        if (seed < 0 || seed >= maxExclusive)
+            throw new ArgumentException(
+                $"{nameof(seed)} must be non-negative and less than {nameof(maxExclusive)}, but given {nameof(seed)} of {seed} and {nameof(maxExclusive)} of {maxExclusive}");
+        N = seed;
+    }
+
+    // TODO: how much faster than modulus is this mess?
+    public int Tick(int delta = 1, bool updateInstance = true)
+    {
+        if (delta == 0)
+            return N;
+
+        int n = N;
+        int move = delta switch
         {
-            if (N + 1 == _maxExclusive)
-                N = 0;
-            else
-                N++;
+            < 0 => -1,
+            > 0 => 1,
+            0 => throw new UnreachableException(),
+        };
+
+        int absDelta = Math.Abs(delta);
+        for (int i = 0; i < absDelta; i++)
+        {
+            n += move;
+            if (n == _maxExclusive)
+                n = 0;
+            else if (n == -1)
+                n = _maxExclusive - 1;
         }
 
-        return N;
+        if (updateInstance)
+            N = n;
+        return n;
     }
 }
