@@ -66,4 +66,55 @@ public class DeckTests
         }
         Assert.True(pass);
     }
+
+    [Fact]
+    public void TestDeal()
+    {
+        Deck deck = new Deck(
+        [
+            Joker0.Instance,
+            AceOfHearts.Instance,
+            TwoOfHearts.Instance,
+            ThreeOfHearts.Instance,
+            FourOfHearts.Instance,
+            FiveOfHearts.Instance,
+            SixOfHearts.Instance,
+            SevenOfHearts.Instance,
+            EightOfHearts.Instance,
+            NineOfHearts.Instance,
+        ]);
+
+        Deck expectedHand0 = new Deck(
+        [
+            Joker0.Instance,
+            FourOfHearts.Instance,
+            EightOfHearts.Instance,
+        ]);
+
+        Deck expectedHand1 = new Deck(
+        [
+            AceOfHearts.Instance,
+            FiveOfHearts.Instance,
+            NineOfHearts.Instance,
+        ]);
+
+        Deck expectedHand2 = new Deck(
+        [
+            TwoOfHearts.Instance,
+            SixOfHearts.Instance,
+        ]);
+
+        Deck expectedHand3 = new Deck(
+        [
+            ThreeOfHearts.Instance,
+            SevenOfHearts.Instance,
+        ]);
+
+        List<Deck> hands = deck.Deal(4);
+        Assert.Equal(4, hands.Count);
+        Assert.True(expectedHand0.Matches(hands[0]));
+        Assert.True(expectedHand1.Matches(hands[1]));
+        Assert.True(expectedHand2.Matches(hands[2]));
+        Assert.True(expectedHand3.Matches(hands[3]));
+    }
 }

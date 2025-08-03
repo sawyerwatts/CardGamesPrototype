@@ -4,7 +4,8 @@ using System.Text;
 
 namespace CardGamesPrototype.Lib;
 
-// TODO: make a Dealer for the deck so can more conventionally inject/mock rng?
+// TODO: make a Dealer for the deck so can more conventionally inject/mock rng? and inject deck into dealer?
+//      and so could log w/o method injection?
 
 // TODO: Chimera would be a fun one to implement
 //      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
@@ -155,6 +156,32 @@ public partial class Deck(IEnumerable<Card>? seed = null) : IList<Deck.CardState
         return RandomNumberGenerator.GetInt32(
             fromInclusive: fromInclusive,
             toExclusive: toExclusive);
+    }
+
+    public List<Deck> Deal(int numHands)
+    {
+        if (numHands < 1)
+            throw new ArgumentException($"{nameof(numHands)} must be positive but given {numHands}");
+
+        List<Deck> hands = new(capacity: numHands);
+        for (int i = 0; i < numHands; i++)
+            hands.Add([]);
+
+        CircularCounter iCurrHand = new(numHands);
+        foreach (CardState currCard in this)
+        {
+            hands[iCurrHand.N].Add(currCard);
+            iCurrHand.Increment();
+        }
+
+        return hands;
+    }
+
+    public List<Card> GetCards()
+    {
+        List<Card> cards = new(capacity: this.Count);
+        cards.AddRange(this.Select(cardState => cardState.Card));
+        return cards;
     }
 
     public override string ToString()
