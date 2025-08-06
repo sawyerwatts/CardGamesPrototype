@@ -6,8 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CardGamesPrototype.Lib.Games;
 
-// TODO: make a Dealer for the deck so can more conventionally inject/mock rng? and inject deck into dealer?
-//      and so could log w/o method injection?
+// TODO: break up HeartsGame into a whole subdir in Games
 
 // TODO: Chimera would be a fun one to implement
 //      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
@@ -32,15 +31,15 @@ namespace CardGamesPrototype.Lib.Games;
 
 public sealed class HeartsGame : IGame
 {
-    public sealed class Factory(ILogger<HeartsGame> logger)
+    public sealed class Factory(IDealer dealer, ILogger<HeartsGame> logger)
     {
-        public HeartsGame Make(List<Player> players) => new HeartsGame(logger, players);
+        public HeartsGame Make(List<Player> players) => new HeartsGame(dealer, players, logger);
     }
 
     private sealed record PlayerState(Player Player)
     {
         public int Score { get; set; } = 0;
-        public List<Trick> TricksTakenThisRound { get; set; } = [];
+        public List<Cards> TricksTakenThisRound { get; set; } = [];
     }
 
     private enum PassDirection
@@ -54,10 +53,12 @@ public sealed class HeartsGame : IGame
     private const int NumPlayers = 4;
     private readonly List<PlayerState> _playerStates = new(capacity: NumPlayers);
 
+    private readonly IDealer _dealer;
     private readonly ILogger<HeartsGame> _logger;
 
-    private HeartsGame(ILogger<HeartsGame> logger, List<Player> players)
+    private HeartsGame(IDealer dealer, List<Player> players, ILogger<HeartsGame> logger)
     {
+        _dealer = dealer;
         _logger = logger;
         if (players.Count != NumPlayers)
             throw new ArgumentException(
@@ -117,9 +118,9 @@ public sealed class HeartsGame : IGame
     {
         _logger.LogInformation("Shuffling, cutting, and dealing the deck to {NumPlayers}",
             NumPlayers);
-        List<Deck> hands = Deck.Make().Shuffle().Cut().Deal(NumPlayers); // TODO: this makes testing real hard (see top for more)
+        List<Cards> hands = _dealer.ShuffleCutDeal(Decks.Standard52, NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
-            await _playerStates[i].Player.SetHand(hands[i].GetCards(), cancellationToken);
+            await _playerStates[i].Player.SetHand(hands[i], cancellationToken);
 
         if (passDirection is PassDirection.Hold)
         {
@@ -129,10 +130,10 @@ public sealed class HeartsGame : IGame
 
         _logger.LogInformation("Asking each player to select three cards to pass {PassDirection}",
             passDirection);
-        List<Task<List<Card>>> takeCardsFromPlayerTasks = new(capacity: NumPlayers);
+        List<Task<Cards>> takeCardsFromPlayerTasks = new(capacity: NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
         {
-            Task<List<Card>> task = _playerStates[i].Player
+            Task<Cards> task = _playerStates[i].Player
                 .RemoveCards(PlayerSpecRemove3Cards, cancellationToken);
             takeCardsFromPlayerTasks.Add(task);
         }
@@ -153,7 +154,7 @@ public sealed class HeartsGame : IGame
                     $"Passing {passDirection} from {nameof(iSourcePlayer)} {iSourcePlayer}"),
             };
 
-            List<Card> cardsToPass = takeCardsFromPlayerTasks[iSourcePlayer].Result;
+            Cards cardsToPass = takeCardsFromPlayerTasks[iSourcePlayer].Result;
             Task task = _playerStates[iTargetPlayer].Player
                 .GiveCards(cardsToPass, cancellationToken);
             giveCardsToPlayerTasks.Add(task);

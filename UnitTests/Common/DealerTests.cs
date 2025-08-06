@@ -2,16 +2,8 @@ using CardGamesPrototype.Lib.Common;
 
 namespace CardGamesPrototype.UnitTests.Common;
 
-public class DeckTests
+public class DealerTests
 {
-    [Fact]
-    public void TestMakeWithDefaults()
-    {
-        var deck = Deck.Make(Deck.Specification.Standard52CardDeck);
-        Assert.Equal(52, deck.Count);
-        Assert.Equal(52, deck.Distinct().Count());
-    }
-
     [Fact]
     public void TestCut()
     {
@@ -51,6 +43,7 @@ public class DeckTests
     [Fact]
     public void TestShuffle()
     {
+        // TODO: test that multiple shuffles changes the order
         Deck deck = Deck.Make();
         Deck unexpectedDeck = Deck.Make();
 
