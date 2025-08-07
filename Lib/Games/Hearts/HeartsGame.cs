@@ -4,8 +4,6 @@ using CardGamesPrototype.Lib.Common;
 
 using Microsoft.Extensions.Logging;
 
-// TODO: update this file to use HeartsCards
-
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
 // TODO: Chimera would be a fun one to implement

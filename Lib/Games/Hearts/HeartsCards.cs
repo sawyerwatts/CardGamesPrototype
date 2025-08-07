@@ -2,10 +2,11 @@ using CardGamesPrototype.Lib.Common;
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
-// TODO: how could I impl HeartsCard, HeartsCards, and HeartsPlayer w/o "inheritance"?
+// TODO: update HeartsGame to use HeartsCards
+//      prob need IDealer methods w/ <TCard> where TCard : Card
+//      prob need Player methods w/ <TCard> where TCard : Card ?
 
-// TODO: need IDealer methods w/ <TCard> where TCard : Card
-// TODO: need Player methods w/ <TCard> where TCard : Card ?
+// TODO: how could I impl HeartsCard, HeartsCards, and HeartsPlayer w/o "inheritance"?
 
 public sealed record HeartsCard : Card
 {
