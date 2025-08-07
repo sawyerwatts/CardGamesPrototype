@@ -25,7 +25,7 @@ public interface IDealer
     List<Cards> Deal(Cards deck, int numHands);
 }
 
-public class Dealer(ILogger<Dealer> logger) : IDealer
+public sealed class Dealer(Dealer.IRng rng, ILogger<Dealer> logger) : IDealer
 {
     public List<Cards> ShuffleCutDeal(Cards deck, int numHands)
     {
@@ -37,7 +37,7 @@ public class Dealer(ILogger<Dealer> logger) : IDealer
     public Cards Shuffle(Cards deck)
     {
         logger.LogInformation("Shuffling the deck");
-        RandomNumberGenerator.Shuffle(CollectionsMarshal.AsSpan(deck));
+        rng.Shuffle(CollectionsMarshal.AsSpan(deck));
         return deck;
     }
 
@@ -55,7 +55,7 @@ public class Dealer(ILogger<Dealer> logger) : IDealer
         int newTopCardIndex;
         try
         {
-            newTopCardIndex = RandomNumberGenerator.GetInt32(
+            newTopCardIndex = rng.GetInt32(
                 fromInclusive: minNumCardsFromEdges,
                 toExclusive: deck.Count - minNumCardsFromEdges);
         }
@@ -93,5 +93,22 @@ public class Dealer(ILogger<Dealer> logger) : IDealer
         }
 
         return hands;
+    }
+
+    public interface IRng
+    {
+        /// <inheritdoc cref="RandomNumberGenerator.Shuffle{T}"/>
+        void Shuffle<T>(Span<T> values);
+
+        /// <inheritdoc cref="RandomNumberGenerator.GetInt32(int,int)"/>
+        int GetInt32(int fromInclusive, int toExclusive);
+    }
+
+    public class Rng : IRng
+    {
+        public void Shuffle<T>(Span<T> values) => RandomNumberGenerator.Shuffle(values);
+
+        public int GetInt32(int fromInclusive, int toExclusive) =>
+            RandomNumberGenerator.GetInt32(fromInclusive: fromInclusive, toExclusive: toExclusive);
     }
 }

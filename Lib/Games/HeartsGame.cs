@@ -118,7 +118,7 @@ public sealed class HeartsGame : IGame
     {
         _logger.LogInformation("Shuffling, cutting, and dealing the deck to {NumPlayers}",
             NumPlayers);
-        List<Cards> hands = _dealer.ShuffleCutDeal(Decks.Standard52, NumPlayers);
+        List<Cards> hands = _dealer.ShuffleCutDeal(Decks.Standard52(), NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
             await _playerStates[i].Player.SetHand(hands[i], cancellationToken);
 

@@ -8,16 +8,18 @@ public class Cards : List<Card>
 
     public Cards(IEnumerable<Card> seed) : base(seed) { }
 
-    public void FlipFaceUp()
+    public Cards(IEnumerable<CardValue> seed) : base(seed.Select(cardValue => new Card(cardValue))) { }
+
+    public void RevealAll()
     {
         foreach (Card card in this)
-            card.IsFaceUp = true;
+            card.Hidden = false;
     }
 
-    public void FlipFaceDown()
+    public void HideAll()
     {
         foreach (Card card in this)
-            card.IsFaceUp = true;
+            card.Hidden = true;
     }
 
     public override string ToString()
@@ -38,7 +40,6 @@ public class Cards : List<Card>
         return builder.ToString();
     }
 
-    // TODO: should this sort b/f checking? or at least have a param to ctl?
     public bool Matches(Cards other)
     {
         if (ReferenceEquals(this, other))
@@ -58,7 +59,7 @@ public class Cards : List<Card>
 }
 public record Card(CardValue CardValue)
 {
-    public bool IsFaceUp { get; set; } = false;
+    public bool Hidden { get; set; } = true;
 }
 
 public abstract record CardValue(Rank Rank, Suit Suit)
