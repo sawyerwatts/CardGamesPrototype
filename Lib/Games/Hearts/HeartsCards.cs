@@ -2,14 +2,24 @@ using CardGamesPrototype.Lib.Common;
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
+// TODO: how could I impl HeartsCard, HeartsCards, and HeartsPlayer w/o "inheritance"?
+
+// TODO: need IDealer<TCard> where TCard : Card
+// TODO: need Player<TCard> where TCard : Card ?
+
 public sealed record HeartsCard : Card
 {
     public int Points { get; }
 
-    public HeartsCard(Card card, int points)
+    public HeartsCard(Card card)
         : base(card)
     {
-        Points = points;
+        if (card.CardValue.Suit is Suit.Hearts)
+            Points = 1;
+        else if (card.CardValue.Rank is Rank.Queen && card.CardValue.Suit is Suit.Spades)
+            Points = 13;
+        else
+            Points = 0;
     }
 }
 
@@ -17,29 +27,8 @@ public sealed class HeartsCards : Cards
 {
     public HeartsCards(int capacity = 0) : base(capacity) { }
 
-    public HeartsCards(IEnumerable<Card> seed) : base(seed) { }
+    public HeartsCards(IEnumerable<HeartsCard> seed) : base(seed) { }
 
-    public HeartsCards(IEnumerable<CardValue> seed) : base(seed.Select(cardValue =>
-        new Card(cardValue)))
-    {
-    }
-
-    public static HeartsCards MakeDeck()
-    {
-        Cards normalDeck = Decks.Standard52();
-        HeartsCards heartsDeck = new(capacity: normalDeck.Count);
-        foreach (Card card in normalDeck)
-        {
-            int points = 0;
-            if (card.CardValue.Suit is Suit.Hearts)
-                points = 0;
-            else if (card.CardValue.Rank is Rank.Queen && card.CardValue.Suit is Suit.Spades)
-                points = 13;
-            HeartsCard heartsCard = new(card, points);
-            heartsDeck.Add(heartsCard);
-        }
-
-        return heartsDeck;
-    }
+    public HeartsCards(IEnumerable<Card> seed) : base(seed.Select(card => new HeartsCard(card))) { }
 }
 

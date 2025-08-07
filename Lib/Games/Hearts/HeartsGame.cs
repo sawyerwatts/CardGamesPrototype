@@ -66,8 +66,8 @@ public sealed class HeartsGame : IGame
         {
             await SetupRound((PassDirection)cardPassingDirection.Tick(), cancellationToken);
 
-            int iCurrPlayer = _players.FindIndex(playerState =>
-                playerState.Player.PeakCards.Contains(TwoOfClubs.Instance));
+            int iCurrPlayer = _players.FindIndex(heartsPlayer =>
+                heartsPlayer.PeakCards.Contains(TwoOfClubs.Instance));
             if (iCurrPlayer == -1)
                 throw new InvalidOperationException(
                     $"Could not find a player with the {nameof(TwoOfClubs)}");
@@ -88,7 +88,7 @@ public sealed class HeartsGame : IGame
             //      may need to *actually* implement the Spec pattern since points are game-specific
             //          unless willing to have game bounce selection back to human player?
 
-            while (_players[0].Player.PeakCards.Count > 0)
+            while (_players[0].PeakCards.Count > 0)
             {
                 // TODO: play a trick and update iCurrPlayer to trick taker
                 //      hearts cannot be lead until broken!
@@ -104,9 +104,9 @@ public sealed class HeartsGame : IGame
     {
         _logger.LogInformation("Shuffling, cutting, and dealing the deck to {NumPlayers}",
             NumPlayers);
-        List<Cards> hands = _dealer.ShuffleCutDeal(HeartsCards.MakeDeck(), NumPlayers);
+        List<Cards> hands = _dealer.ShuffleCutDeal(new HeartsCards(Decks.Standard52()), NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
-            await _players[i].Player.SetHand(hands[i], cancellationToken);
+            await _players[i].SetHand(hands[i], cancellationToken);
 
         if (passDirection is PassDirection.Hold)
         {
@@ -119,8 +119,7 @@ public sealed class HeartsGame : IGame
         List<Task<Cards>> takeCardsFromPlayerTasks = new(capacity: NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
         {
-            Task<Cards> task = _players[i].Player
-                .RemoveCards(PlayerSpecRemove3Cards, cancellationToken);
+            Task<Cards> task = _players[i].RemoveCards(PlayerSpecRemove3Cards, cancellationToken);
             takeCardsFromPlayerTasks.Add(task);
         }
 
@@ -141,8 +140,7 @@ public sealed class HeartsGame : IGame
             };
 
             Cards cardsToPass = takeCardsFromPlayerTasks[iSourcePlayer].Result;
-            Task task = _players[iTargetPlayer].Player
-                .GiveCards(cardsToPass, cancellationToken);
+            Task task = _players[iTargetPlayer].GiveCards(cardsToPass, cancellationToken);
             giveCardsToPlayerTasks.Add(task);
         }
 
