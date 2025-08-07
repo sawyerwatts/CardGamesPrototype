@@ -57,8 +57,15 @@ public class Cards : List<Card>
         return true;
     }
 }
+
 public record Card(CardValue CardValue)
 {
+    public Card(Card card)
+    {
+        CardValue = card.CardValue;
+        Hidden = card.Hidden;
+    }
+
     public bool Hidden { get; set; } = true;
 }
 

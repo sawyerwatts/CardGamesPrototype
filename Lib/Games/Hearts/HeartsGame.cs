@@ -4,9 +4,9 @@ using CardGamesPrototype.Lib.Common;
 
 using Microsoft.Extensions.Logging;
 
-namespace CardGamesPrototype.Lib.Games;
+// TODO: update this file to use HeartsCards
 
-// TODO: break up HeartsGame into a whole subdir in Games
+namespace CardGamesPrototype.Lib.Games.Hearts;
 
 // TODO: Chimera would be a fun one to implement
 //      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
@@ -36,22 +36,8 @@ public sealed class HeartsGame : IGame
         public HeartsGame Make(List<Player> players) => new HeartsGame(dealer, players, logger);
     }
 
-    private sealed record PlayerState(Player Player)
-    {
-        public int Score { get; set; } = 0;
-        public List<Cards> TricksTakenThisRound { get; set; } = [];
-    }
-
-    private enum PassDirection
-    {
-        Left = 0,
-        Right = 1,
-        Across = 2,
-        Hold = 3
-    }
-
     private const int NumPlayers = 4;
-    private readonly List<PlayerState> _playerStates = new(capacity: NumPlayers);
+    private readonly List<HeartsPlayer> _players = new(capacity: NumPlayers);
 
     private readonly IDealer _dealer;
     private readonly ILogger<HeartsGame> _logger;
@@ -65,7 +51,7 @@ public sealed class HeartsGame : IGame
                 $"Hearts requires exactly {NumPlayers} players, but given {players.Count}");
 
         foreach (Player player in players)
-            _playerStates.Add(new PlayerState(player));
+            _players.Add(new HeartsPlayer(player));
     }
 
     private static readonly Player.RemoveCardsSpec PlayerSpecRemove3Cards = new(
@@ -76,11 +62,11 @@ public sealed class HeartsGame : IGame
     {
         _logger.LogInformation("Starting a game of Hearts");
         CircularCounter cardPassingDirection = new(4, startAtEnd: true);
-        while (_playerStates.All(player => player.Score < 100))
+        while (_players.All(player => player.Score < 100))
         {
             await SetupRound((PassDirection)cardPassingDirection.Tick(), cancellationToken);
 
-            int iCurrPlayer = _playerStates.FindIndex(playerState =>
+            int iCurrPlayer = _players.FindIndex(playerState =>
                 playerState.Player.PeakCards.Contains(TwoOfClubs.Instance));
             if (iCurrPlayer == -1)
                 throw new InvalidOperationException(
@@ -102,7 +88,7 @@ public sealed class HeartsGame : IGame
             //      may need to *actually* implement the Spec pattern since points are game-specific
             //          unless willing to have game bounce selection back to human player?
 
-            while (_playerStates[0].Player.PeakCards.Count > 0)
+            while (_players[0].Player.PeakCards.Count > 0)
             {
                 // TODO: play a trick and update iCurrPlayer to trick taker
                 //      hearts cannot be lead until broken!
@@ -118,10 +104,9 @@ public sealed class HeartsGame : IGame
     {
         _logger.LogInformation("Shuffling, cutting, and dealing the deck to {NumPlayers}",
             NumPlayers);
-        // TODO: make HeartsCard w/ Points
-        List<Cards> hands = _dealer.ShuffleCutDeal(Decks.Standard52(), NumPlayers);
+        List<Cards> hands = _dealer.ShuffleCutDeal(HeartsCards.MakeDeck(), NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
-            await _playerStates[i].Player.SetHand(hands[i], cancellationToken);
+            await _players[i].Player.SetHand(hands[i], cancellationToken);
 
         if (passDirection is PassDirection.Hold)
         {
@@ -134,7 +119,7 @@ public sealed class HeartsGame : IGame
         List<Task<Cards>> takeCardsFromPlayerTasks = new(capacity: NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
         {
-            Task<Cards> task = _playerStates[i].Player
+            Task<Cards> task = _players[i].Player
                 .RemoveCards(PlayerSpecRemove3Cards, cancellationToken);
             takeCardsFromPlayerTasks.Add(task);
         }
@@ -156,7 +141,7 @@ public sealed class HeartsGame : IGame
             };
 
             Cards cardsToPass = takeCardsFromPlayerTasks[iSourcePlayer].Result;
-            Task task = _playerStates[iTargetPlayer].Player
+            Task task = _players[iTargetPlayer].Player
                 .GiveCards(cardsToPass, cancellationToken);
             giveCardsToPlayerTasks.Add(task);
         }

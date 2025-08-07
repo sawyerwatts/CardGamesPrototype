@@ -1,5 +1,6 @@
 using CardGamesPrototype.Lib.Common;
 using CardGamesPrototype.Lib.Games;
+using CardGamesPrototype.Lib.Games.Hearts;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
