@@ -4,8 +4,8 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 
 // TODO: how could I impl HeartsCard, HeartsCards, and HeartsPlayer w/o "inheritance"?
 
-// TODO: need IDealer<TCard> where TCard : Card
-// TODO: need Player<TCard> where TCard : Card ?
+// TODO: need IDealer methods w/ <TCard> where TCard : Card
+// TODO: need Player methods w/ <TCard> where TCard : Card ?
 
 public sealed record HeartsCard : Card
 {
