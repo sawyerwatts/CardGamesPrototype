@@ -1,8 +1,8 @@
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 
 using Microsoft.Extensions.Logging;
-
-// TODO: rename Common to AbstractCore?
+using Microsoft.Extensions.Options;
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
@@ -30,21 +30,22 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 
 public sealed class HeartsGame : IGame
 {
-    private const int EndOfGameScore = 100;
     private const int NumPlayers = 4;
     private readonly List<HeartsPlayer> _players;
     private readonly IDealer _dealer;
     private readonly ILogger<HeartsGame> _logger;
+    private readonly Options _options;
 
-    public sealed class Factory(IDealer dealer, ILogger<HeartsGame> logger)
+    public sealed class Factory(IDealer dealer, IOptions<Options> options, ILogger<HeartsGame> logger)
     {
-        public HeartsGame Make(List<HeartsPlayer> players) => new(dealer, players, logger);
+        public HeartsGame Make(List<HeartsPlayer> players) => new(dealer, players, options, logger);
     }
 
-    private HeartsGame(IDealer dealer, List<HeartsPlayer> players, ILogger<HeartsGame> logger)
+    private HeartsGame(IDealer dealer, List<HeartsPlayer> players, IOptions<Options> options, ILogger<HeartsGame> logger)
     {
         _dealer = dealer;
         _logger = logger;
+        _options = options.Value;
         if (players.Count != NumPlayers)
             throw new ArgumentException(
                 $"Hearts requires exactly {NumPlayers} players, but given {players.Count}");
@@ -55,7 +56,7 @@ public sealed class HeartsGame : IGame
     {
         _logger.LogInformation("Starting a game of Hearts");
         CircularCounter cardPassingDirection = new(4, startAtEnd: true);
-        while (_players.All(player => player.Score < EndOfGameScore))
+        while (_players.All(player => player.Score < _options.EndOfGamePoints))
         {
             await SetupRound((PassDirection)cardPassingDirection.Tick(), cancellationToken);
 
@@ -65,21 +66,18 @@ public sealed class HeartsGame : IGame
                 throw new InvalidOperationException(
                     $"Could not find a player with the {nameof(TwoOfClubs)}");
 
-            bool hasHeartsBeenBroken = false;
-            (iTrickStartPlayer, hasHeartsBeenBroken) = await PlayOutTrick(
-                firstTrick: true,
-                iTrickStartPlayer: iTrickStartPlayer,
-                hasHeartsBeenBroken: hasHeartsBeenBroken,
-                cancellationToken: cancellationToken);
+            bool isHeartsBroken = false;
+            (iTrickStartPlayer, isHeartsBroken) =
+                await PlayOutTrick(firstTrick: true, iTrickStartPlayer, isHeartsBroken, cancellationToken);
 
             while (_players[0].PeakHand.Any())
             {
-                (iTrickStartPlayer, hasHeartsBeenBroken) = await PlayOutTrick(
-                    firstTrick: false,
-                    iTrickStartPlayer: iTrickStartPlayer,
-                    hasHeartsBeenBroken: hasHeartsBeenBroken,
-                    cancellationToken: cancellationToken);
+                (iTrickStartPlayer, isHeartsBroken) =
+                    await PlayOutTrick(firstTrick: false, iTrickStartPlayer, isHeartsBroken, cancellationToken);
             }
+
+            if (_players.Any(player => player.PeakHand.Any()))
+                throw new InvalidOperationException("Some players have cards left despite the 0th player having none");
 
             // TODO: count points accrued in tricks (watch out for shooting the moon!)
         }
@@ -87,10 +85,10 @@ public sealed class HeartsGame : IGame
         _logger.LogInformation("Completed a game of Hearts");
     }
 
-    private async Task<(int iNewCurrPlayer, bool hasHeartsBeenBroken)> PlayOutTrick(
+    private async Task<(int iNewCurrPlayer, bool isHeartsBroken)> PlayOutTrick(
         bool firstTrick,
         int iTrickStartPlayer,
-        bool hasHeartsBeenBroken,
+        bool isHeartsBroken,
         CancellationToken cancellationToken)
     {
         CircularCounter iTrickPlayer = new(iTrickStartPlayer);
@@ -98,7 +96,7 @@ public sealed class HeartsGame : IGame
         HeartsCard openingCard = await _players[iTrickStartPlayer].PlayCard(
             validateChosenCard: (hand, iCardToPlay) => firstTrick
                 ? hand[iCardToPlay].Value is TwoOfClubs
-                : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(hasHeartsBeenBroken, hand, iCardToPlay),
+                : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
             cancellationToken);
         _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, openingCard.Value);
 
@@ -109,15 +107,15 @@ public sealed class HeartsGame : IGame
             HeartsCard chosenCard = await _players[iTrickPlayer.N].PlayCard(
                 validateChosenCard: (hand, iCardToPlay) => CheckPlayedCard.EnsureTrickSuitIsFollowedIfPossible(trick, hand, iCardToPlay) && firstTrick
                     ? hand[iCardToPlay].Points == 0
-                    : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(hasHeartsBeenBroken, hand, iCardToPlay),
+                    : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
                 cancellationToken);
             trick.Add(chosenCard);
             _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, chosenCard.Value);
 
-            if (!hasHeartsBeenBroken && chosenCard.Value.Suit is Suit.Hearts)
+            if (!isHeartsBroken && chosenCard.Value.Suit is Suit.Hearts)
             {
                 _logger.LogInformation("Hearts has been broken!");
-                hasHeartsBeenBroken = true;
+                isHeartsBroken = true;
             }
         }
 
@@ -130,7 +128,7 @@ public sealed class HeartsGame : IGame
         int iNewCurrPlayer = -1; // TODO: this
         _logger.LogInformation("Player at position {PlayerPosition} took the trick", iNewCurrPlayer);
 
-        return (iNewCurrPlayer, hasHeartsBeenBroken);
+        return (iNewCurrPlayer, isHeartsBroken);
     }
 
     private async Task SetupRound(PassDirection passDirection, CancellationToken cancellationToken)
@@ -156,7 +154,7 @@ public sealed class HeartsGame : IGame
         for (int i = 0; i < NumPlayers; i++)
         {
             Task<Cards<HeartsCard>> task = _players[i].PlayCards(
-                validateChosenCards: playedCards => playedCards.Count == 3,
+                validateChosenCards: (_, iCardsToPlay) => iCardsToPlay.Count == 3,
                 cancellationToken);
             takeCardsFromPlayerTasks.Add(task);
         }
@@ -184,5 +182,14 @@ public sealed class HeartsGame : IGame
 
         await Task.WhenAll(giveCardsToPlayerTasks).WaitAsync(cancellationToken);
         _logger.LogInformation("Hands are finalized");
+    }
+
+    public sealed class Options
+    {
+        /// <summary>
+        /// The game will end when a round is completed and someone has at least this many points.
+        /// </summary>
+        [Range(1, int.MaxValue)]
+        public int EndOfGamePoints { get; set; } = 100;
     }
 }
