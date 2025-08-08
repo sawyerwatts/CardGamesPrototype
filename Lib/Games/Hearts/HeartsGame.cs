@@ -69,19 +69,22 @@ public sealed class HeartsGame : IGame
                 throw new InvalidOperationException(
                     $"Could not find a player with the {nameof(TwoOfClubs)}");
 
-            // TODO: play first trick
-            //      no points can be played this trick!
-            //          how attribute points?
-            //          need a HeartsCard type w/ points?
-            //          use linq to inject the valid cards that could be specified?
-            //              Player would basically just become IPlayer
+            // TODO: play first trick: no points can be played this trick!
+            //      use linq to inject the valid cards that could be specified?
+            //          Player would basically just become IPlayer
             //      may need to *actually* implement the Spec pattern since points are game-specific
             //          unless willing to have game bounce selection back to human player?
 
+            bool hasHeartsBeenBroken = false;
             while (_players[0].PeakCards.Count > 0)
             {
-                // TODO: play a trick and update iCurrPlayer to trick taker
-                //      hearts cannot be lead until broken!
+                // TODO: play a non-first trick
+                //      ask iCurrPlayer for a card to begin trick
+                //          hearts cannot be lead until broken!
+                //      move clockwise around players for their card in the trick
+                //          players must follow suit if they can
+                //      whoever has the highest card in the suit takes the trick and becomes iCurrPlayer
+                //          ace is high!
             }
 
             // TODO: count points accrued in tricks (watch out for shooting the moon!)
