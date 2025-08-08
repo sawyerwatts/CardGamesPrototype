@@ -33,6 +33,20 @@ public record struct CircularCounter
         N = seed;
     }
 
+    public int CycleClockwise(int times = 1, bool updateInstance = true)
+    {
+        if (times < 1)
+            throw new ArgumentException($"{nameof(times)} must be positive but given {times}");
+        return Tick(times, updateInstance: updateInstance);
+    }
+
+    public int CycleCounterClockwise(int times = 1, bool updateInstance = true)
+    {
+        if (times < 1)
+            throw new ArgumentException($"{nameof(times)} must be positive but given {times}");
+        return Tick(times * -1, updateInstance: updateInstance);
+    }
+
     // TODO: how much faster than modulus is this mess?
     public int Tick(int delta = 1, bool updateInstance = true)
     {

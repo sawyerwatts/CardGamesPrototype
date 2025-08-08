@@ -1,23 +1,24 @@
 using System.Diagnostics;
 
-using CardGamesPrototype.Lib.Common;
-
 using Microsoft.Extensions.Logging;
+
+// TODO: rename Common to AbstractCore?
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
+// TODO: have a Players : IList<Player> w/ a method to concurrently apply op to all players?
+//      have func to play out trick/op, starting with a specific player?
+
 // TODO: Chimera would be a fun one to implement
+//      similar to ichu, The Great Dalmuti, Big Two, and Beat the Landlord
 //      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
 //      have a deal func that knows how many hands to deal to, and the optional max capacity of those hands? and/or a priority of the hands to deal to?
 
-// TODO: make a separate IPlayerInterface and leave this as purely concrete
+// TODO: make a separate IPlayerInterface and leave this as purely concrete?
 
 // TODO: a player name would be cool too
 
 // TODO: put try/catch inside game whileLoop so if any excs occur, can continue the game?
-
-// TODO: have a Players : IList<Player> w/ a method to concurrently apply op to all players?
-//      have func to play out trick/op, starting with a specific player?
 
 // TODO: have hand sort funcs? order by rank then suit, and order by suit then rank
 //      ace low vs high
@@ -29,54 +30,55 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 
 public sealed class HeartsGame : IGame
 {
+    private const int EndOfGameScore = 100;
     private const int NumPlayers = 4;
     private readonly List<HeartsPlayer> _players;
     private readonly IDealer _dealer;
     private readonly ILogger<HeartsGame> _logger;
 
-    private static readonly Player.RemoveCardsSpec PlayerSpecRemove3Cards = new(
-        MinCardsToRemove: 3,
-        MaxCardsToRemove: 3);
-
     public sealed class Factory(IDealer dealer, ILogger<HeartsGame> logger)
     {
-        public HeartsGame Make(List<Player> players) => new(dealer, players, logger);
+        public HeartsGame Make(List<HeartsPlayer> players) => new(dealer, players, logger);
     }
 
-    private HeartsGame(IDealer dealer, List<Player> players, ILogger<HeartsGame> logger)
+    private HeartsGame(IDealer dealer, List<HeartsPlayer> players, ILogger<HeartsGame> logger)
     {
         _dealer = dealer;
         _logger = logger;
         if (players.Count != NumPlayers)
             throw new ArgumentException(
                 $"Hearts requires exactly {NumPlayers} players, but given {players.Count}");
-        _players = new List<HeartsPlayer>(capacity: NumPlayers);
-        foreach (Player player in players)
-            _players.Add(new HeartsPlayer(player));
+        _players = players;
     }
 
     public async Task Play(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting a game of Hearts");
         CircularCounter cardPassingDirection = new(4, startAtEnd: true);
-        while (_players.All(player => player.Score < 100))
+        while (_players.All(player => player.Score < EndOfGameScore))
         {
             await SetupRound((PassDirection)cardPassingDirection.Tick(), cancellationToken);
 
-            int iCurrPlayer = _players.FindIndex(heartsPlayer =>
-                heartsPlayer.PeakCards.Contains(TwoOfClubs.Instance));
-            if (iCurrPlayer == -1)
+            int iTrickStartPlayer = _players.FindIndex(player =>
+                player.PeakHand.Any(cardValue => cardValue is TwoOfClubs));
+            if (iTrickStartPlayer == -1)
                 throw new InvalidOperationException(
                     $"Could not find a player with the {nameof(TwoOfClubs)}");
 
             bool hasHeartsBeenBroken = false;
-            (iCurrPlayer, hasHeartsBeenBroken) =
-                await PlayTrick(iCurrPlayer, hasHeartsBeenBroken, cancellationToken);
+            (iTrickStartPlayer, hasHeartsBeenBroken) = await PlayOutTrick(
+                firstTrick: true,
+                iTrickStartPlayer: iTrickStartPlayer,
+                hasHeartsBeenBroken: hasHeartsBeenBroken,
+                cancellationToken: cancellationToken);
 
-            while (_players[0].PeakCards.Count > 0)
+            while (_players[0].PeakHand.Any())
             {
-                (iCurrPlayer, hasHeartsBeenBroken) =
-                    await PlayTrick(iCurrPlayer, hasHeartsBeenBroken, cancellationToken);
+                (iTrickStartPlayer, hasHeartsBeenBroken) = await PlayOutTrick(
+                    firstTrick: false,
+                    iTrickStartPlayer: iTrickStartPlayer,
+                    hasHeartsBeenBroken: hasHeartsBeenBroken,
+                    cancellationToken: cancellationToken);
             }
 
             // TODO: count points accrued in tricks (watch out for shooting the moon!)
@@ -85,27 +87,50 @@ public sealed class HeartsGame : IGame
         _logger.LogInformation("Completed a game of Hearts");
     }
 
-    private Task<(int iNewCurrPlayer, bool hasHeartsBeenBroken)> PlayTrick(
-        int iCurrPlayer,
+    private async Task<(int iNewCurrPlayer, bool hasHeartsBeenBroken)> PlayOutTrick(
+        bool firstTrick,
+        int iTrickStartPlayer,
         bool hasHeartsBeenBroken,
         CancellationToken cancellationToken)
     {
+        CircularCounter iTrickPlayer = new(iTrickStartPlayer);
+        _logger.LogInformation("Getting trick's opening card from player at position {PlayerPosition}", iTrickPlayer.N);
+        HeartsCard openingCard = await _players[iTrickStartPlayer].PlayCard(
+            validateChosenCard: (hand, iCardToPlay) => firstTrick
+                ? hand[iCardToPlay].Value is TwoOfClubs
+                : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(hasHeartsBeenBroken, hand, iCardToPlay),
+            cancellationToken);
+        _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, openingCard.Value);
+
+        Cards<HeartsCard> trick = new(capacity: NumPlayers) { openingCard };
+        while (iTrickPlayer.CycleClockwise() != iTrickStartPlayer)
+        {
+            _logger.LogInformation("Getting trick's next card from player at position {PlayerPosition}", iTrickPlayer.N);
+            HeartsCard chosenCard = await _players[iTrickPlayer.N].PlayCard(
+                validateChosenCard: (hand, iCardToPlay) => CheckPlayedCard.EnsureTrickSuitIsFollowedIfPossible(trick, hand, iCardToPlay) && firstTrick
+                    ? hand[iCardToPlay].Points == 0
+                    : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(hasHeartsBeenBroken, hand, iCardToPlay),
+                cancellationToken);
+            trick.Add(chosenCard);
+            _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, chosenCard.Value);
+
+            if (!hasHeartsBeenBroken && chosenCard.Value.Suit is Suit.Hearts)
+            {
+                _logger.LogInformation("Hearts has been broken!");
+                hasHeartsBeenBroken = true;
+            }
+        }
+
+        if (trick.Count != NumPlayers)
+            throw new InvalidOperationException($"After playing a trick, the trick has {trick.Count} cards but expected {NumPlayers} cards");
+
         // TODO: this
-        //      - if first trick, iCurrPlayer must play 2clubs
-        //      - else, ask iCurrPlayer for a card to begin trick
-        //          hearts cannot be lead until broken!
-        //      move clockwise around players for their card in the trick
-        //          players must follow suit if they can
-        //          if hearts is broken, track that
-        //          if first trick, no points can be played this trick!
         //      whoever has the highest card in the suit takes the trick and becomes iCurrPlayer
         //          ace is high!
+        int iNewCurrPlayer = -1; // TODO: this
+        _logger.LogInformation("Player at position {PlayerPosition} took the trick", iNewCurrPlayer);
 
-        // TODO: impl ideas
-        //      pass linq or specs to player?
-        //      how best determine b/w first/non-first tricks?
-
-        throw new NotImplementedException();
+        return (iNewCurrPlayer, hasHeartsBeenBroken);
     }
 
     private async Task SetupRound(PassDirection passDirection, CancellationToken cancellationToken)
@@ -117,7 +142,7 @@ public sealed class HeartsGame : IGame
             deck: HeartsCard.MakeDeck(Decks.Standard52()),
             numHands: NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
-            await _players[i].SetHand(hands[i], cancellationToken);
+            await _players[i].GiveCards(hands[i], cancellationToken);
 
         if (passDirection is PassDirection.Hold)
         {
@@ -130,8 +155,9 @@ public sealed class HeartsGame : IGame
         List<Task<Cards<HeartsCard>>> takeCardsFromPlayerTasks = new(capacity: NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
         {
-            Task<Cards<HeartsCard>> task = _players[i]
-                .RemoveCards<HeartsCard>(PlayerSpecRemove3Cards, cancellationToken);
+            Task<Cards<HeartsCard>> task = _players[i].PlayCards(
+                validateChosenCards: playedCards => playedCards.Count == 3,
+                cancellationToken);
             takeCardsFromPlayerTasks.Add(task);
         }
 
@@ -144,9 +170,9 @@ public sealed class HeartsGame : IGame
             CircularCounter sourcePlayerPosition = new(iSourcePlayer, NumPlayers);
             int iTargetPlayer = passDirection switch
             {
-                PassDirection.Left => sourcePlayerPosition.Tick(updateInstance: false),
-                PassDirection.Right => sourcePlayerPosition.Tick(-1, updateInstance: false),
-                PassDirection.Across => sourcePlayerPosition.Tick(2, updateInstance: false),
+                PassDirection.Left => sourcePlayerPosition.CycleClockwise(updateInstance: false),
+                PassDirection.Right => sourcePlayerPosition.CycleCounterClockwise(updateInstance: false),
+                PassDirection.Across => sourcePlayerPosition.CycleClockwise(times: 2, updateInstance: false),
                 _ => throw new UnreachableException(
                     $"Passing {passDirection} from {nameof(iSourcePlayer)} {iSourcePlayer}"),
             };

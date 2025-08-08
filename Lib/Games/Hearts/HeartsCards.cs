@@ -1,5 +1,3 @@
-using CardGamesPrototype.Lib.Common;
-
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
 // TODO: how could I impl HeartsCard, HeartsCards, and HeartsPlayer w/o "inheritance"?
@@ -8,12 +6,12 @@ public sealed record HeartsCard : Card
 {
     public int Points { get; }
 
-    public HeartsCard(CardValue cardValue)
-        : base(cardValue)
+    public HeartsCard(CardValue value)
+        : base(value)
     {
-        if (cardValue.Suit is Suit.Hearts)
+        if (value.Suit is Suit.Hearts)
             Points = 1;
-        else if (cardValue.Rank is Rank.Queen && cardValue.Suit is Suit.Spades)
+        else if (value.Rank is Rank.Queen && value.Suit is Suit.Spades)
             Points = 13;
         else
             Points = 0;

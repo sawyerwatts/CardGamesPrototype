@@ -57,13 +57,13 @@ public class Cards<TCard> : List<TCard>
     }
 }
 
-public record Card(CardValue CardValue)
+public record Card(CardValue Value)
 {
     public bool Hidden { get; set; } = true;
 
     public Card(Card card)
     {
-        CardValue = card.CardValue;
+        Value = card.Value;
         Hidden = card.Hidden;
     }
 
