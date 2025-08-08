@@ -1,4 +1,3 @@
-using CardGamesPrototype.Lib.Games;
 using CardGamesPrototype.Lib.Games.Hearts;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +7,8 @@ namespace CardGamesPrototype.Lib;
 
 public static class ServiceRegistration
 {
+    private const string GamesConfigPrefix = "Games";
+
     public static void RegisterCardGameServices(this IHostApplicationBuilder builder)
     {
         builder.RegisterCommonServices();
@@ -23,5 +24,9 @@ public static class ServiceRegistration
     private static void RegisterHeartsGame(this IHostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<HeartsGame.Factory>();
+        builder.Services.AddOptions<HeartsGame.Options>()
+            .BindConfiguration($"{GamesConfigPrefix}:Hearts")
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
     }
 }
