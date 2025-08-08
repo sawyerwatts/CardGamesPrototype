@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.Reflection.Metadata.Ecma335;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -66,107 +67,23 @@ public sealed class HeartsGame : IGame
 
             bool isHeartsBroken = false;
             (iTrickStartPlayer, isHeartsBroken) =
-                await PlayOutTrick(firstTrick: true, iTrickStartPlayer, isHeartsBroken, cancellationToken);
+                await PlayOutTrick(isFirstTrick: true, iTrickStartPlayer, isHeartsBroken, cancellationToken);
 
             while (_players[0].PeakHand.Any())
             {
                 (iTrickStartPlayer, isHeartsBroken) =
-                    await PlayOutTrick(firstTrick: false, iTrickStartPlayer, isHeartsBroken, cancellationToken);
+                    await PlayOutTrick(isFirstTrick: false, iTrickStartPlayer, isHeartsBroken, cancellationToken);
             }
 
             if (_players.Any(player => player.PeakHand.Any()))
                 throw new InvalidOperationException("Some players have cards left despite the 0th player having none");
 
-            List<int> roundScores = new(capacity: NumPlayers);
-            foreach (HeartsPlayer heartsPlayer in _players)
-            {
-                int roundScore = heartsPlayer.TricksTakenThisRound.Sum(trickCards => trickCards.Sum(card => card.Points));
-                roundScores.Add(roundScore);
-            }
-
-            if (roundScores.Count(score => score == 0) == 3)
-            {
-                int iPlayerShotTheMoon = roundScores.FindIndex(score => score != 0);
-                _logger.LogInformation("Player at position {PlayerPosition} shot the moon!", iPlayerShotTheMoon);
-            }
-            else
-            {
-                for (int i = 0; i < roundScores.Count; i++)
-                {
-                    _players[i].Score += roundScores[i];
-                    _logger.LogInformation("Player at position {PlayerPosition} scored {RoundPoints} point(s) this round", i, roundScores[i]);
-                }
-            }
-
-            for (int i = 0; i < _players.Count; i++)
-                _logger.LogInformation("Player at position {PlayerPosition} has a total of {TotalPoints} point(s)", i, _players[i].Score);
+            ScoreTricks();
         }
 
-        for (int i = 0; i < _players.Count; i++)
-        {
-            HeartsPlayer player = _players[i];
-            if (player.Score < _options.EndOfGamePoints)
-                continue;
-            _logger.LogInformation("The player at position {PlayerPosition} is at or over {EndOfGamePoints} points with {TotalPoints}",
-                i, _options.EndOfGamePoints, player.Score);
-        }
-
-        int minScore = _players.Min(player => player.Score);
-        for (int i = 0; i < _players.Count; i++)
-        {
-            HeartsPlayer player = _players[i];
-            if (player.Score != minScore)
-                continue;
-            _logger.LogInformation("The player at position {PlayerPosition} is the winner with {TotalPoints}!", i, player.Score);
-        }
+        LogWinnersAndLosers();
 
         _logger.LogInformation("Completed the game of hearts");
-    }
-
-    private async Task<(int iNewCurrPlayer, bool isHeartsBroken)> PlayOutTrick(
-        bool firstTrick,
-        int iTrickStartPlayer,
-        bool isHeartsBroken,
-        CancellationToken cancellationToken)
-    {
-        CircularCounter iTrickPlayer = new(iTrickStartPlayer);
-        _logger.LogInformation("Getting trick's opening card from player at position {PlayerPosition}", iTrickPlayer.N);
-        HeartsCard openingCard = await _players[iTrickStartPlayer].PlayCard(
-            validateChosenCard: (hand, iCardToPlay) => firstTrick
-                ? hand[iCardToPlay].Value is TwoOfClubs
-                : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
-            cancellationToken);
-        _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, openingCard.Value);
-
-        Cards<HeartsCard> trick = new(capacity: NumPlayers) { openingCard };
-        while (iTrickPlayer.CycleClockwise() != iTrickStartPlayer)
-        {
-            _logger.LogInformation("Getting trick's next card from player at position {PlayerPosition}", iTrickPlayer.N);
-            HeartsCard chosenCard = await _players[iTrickPlayer.N].PlayCard(
-                validateChosenCard: (hand, iCardToPlay) => CheckPlayedCard.EnsureTrickSuitIsFollowedIfPossible(trick, hand, iCardToPlay) && firstTrick
-                    ? hand[iCardToPlay].Points == 0
-                    : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
-                cancellationToken);
-            trick.Add(chosenCard);
-            _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, chosenCard.Value);
-
-            if (!isHeartsBroken && chosenCard.Value.Suit is Suit.Hearts)
-            {
-                _logger.LogInformation("Hearts has been broken!");
-                isHeartsBroken = true;
-            }
-        }
-
-        if (trick.Count != NumPlayers)
-            throw new InvalidOperationException($"After playing a trick, the trick has {trick.Count} cards but expected {NumPlayers} cards");
-
-        // TODO: this
-        //      whoever has the highest card in the suit takes the trick and becomes iCurrPlayer
-        //          ace is high!
-        int iNewCurrPlayer = -1; // TODO: this
-        _logger.LogInformation("Player at position {PlayerPosition} took the trick", iNewCurrPlayer);
-
-        return (iNewCurrPlayer, isHeartsBroken);
     }
 
     private async Task SetupRound(PassDirection passDirection, CancellationToken cancellationToken)
@@ -220,6 +137,105 @@ public sealed class HeartsGame : IGame
 
         await Task.WhenAll(giveCardsToPlayerTasks).WaitAsync(cancellationToken);
         _logger.LogInformation("Hands are finalized");
+    }
+
+    private async Task<(int iNewCurrPlayer, bool isHeartsBroken)> PlayOutTrick(
+        bool isFirstTrick,
+        int iTrickStartPlayer,
+        bool isHeartsBroken,
+        CancellationToken cancellationToken)
+    {
+        CircularCounter iTrickPlayer = new(iTrickStartPlayer);
+        _logger.LogInformation("Getting trick's opening card from player at position {PlayerPosition}", iTrickPlayer.N);
+        HeartsCard openingCard = await _players[iTrickStartPlayer].PlayCard(
+            validateChosenCard: (hand, iCardToPlay) => isFirstTrick
+                ? hand[iCardToPlay].Value is TwoOfClubs
+                : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
+            cancellationToken);
+        _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, openingCard.Value);
+
+        Cards<HeartsCard> trick = new(capacity: NumPlayers) { openingCard };
+        while (iTrickPlayer.CycleClockwise() != iTrickStartPlayer)
+        {
+            _logger.LogInformation("Getting trick's next card from player at position {PlayerPosition}", iTrickPlayer.N);
+            HeartsCard chosenCard = await _players[iTrickPlayer.N].PlayCard(
+                validateChosenCard: (hand, iCardToPlay) => CheckPlayedCard.EnsureTrickSuitIsFollowedIfPossible(trick, hand, iCardToPlay) && isFirstTrick
+                    ? hand[iCardToPlay].Points == 0
+                    : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
+                cancellationToken);
+            trick.Add(chosenCard);
+            _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, chosenCard.Value);
+
+            if (!isHeartsBroken && chosenCard.Value.Suit is Suit.Hearts)
+            {
+                _logger.LogInformation("Hearts has been broken!");
+                isHeartsBroken = true;
+            }
+        }
+
+        if (trick.Count != NumPlayers)
+            throw new InvalidOperationException($"After playing a trick, the trick has {trick.Count} cards but expected {NumPlayers} cards");
+
+        // TODO: this
+        //      whoever has the highest card in the suit takes the trick and becomes iCurrPlayer
+        //          ace is high!
+        int iNewCurrPlayer = -1; // TODO: this
+        _logger.LogInformation("Player at position {PlayerPosition} took the trick", iNewCurrPlayer);
+
+        return (iNewCurrPlayer, isHeartsBroken);
+    }
+
+    private void ScoreTricks()
+    {
+        _logger.LogInformation("Scoring tricks");
+        List<int> roundScores = new(capacity: NumPlayers);
+        foreach (HeartsPlayer heartsPlayer in _players)
+        {
+            int roundScore = heartsPlayer.TricksTakenThisRound.Sum(trickCards => trickCards.Sum(card => card.Points));
+            roundScores.Add(roundScore);
+        }
+
+        if (roundScores.Count(score => score == 0) == 3)
+        {
+            int iPlayerShotTheMoon = roundScores.FindIndex(score => score != 0);
+            _logger.LogInformation("Player at position {PlayerPosition} shot the moon!", iPlayerShotTheMoon);
+            int score = roundScores[iPlayerShotTheMoon];
+            for (int i = 0; i < roundScores.Count; i++)
+            {
+                if (i != iPlayerShotTheMoon)
+                    roundScores
+            }
+            return;
+        }
+
+        for (int i = 0; i < roundScores.Count; i++)
+        {
+            _players[i].Score += roundScores[i];
+            _logger.LogInformation(
+                "Player at position {PlayerPosition} scored {RoundPoints} point(s) this round and has a total of {TotalPoints} point(s)", i,
+                roundScores[i], _players[i].Score);
+        }
+    }
+
+    private void LogWinnersAndLosers()
+    {
+        for (int i = 0; i < _players.Count; i++)
+        {
+            HeartsPlayer player = _players[i];
+            if (player.Score < _options.EndOfGamePoints)
+                continue;
+            _logger.LogInformation("The player at position {PlayerPosition} is at or over {EndOfGamePoints} points with {TotalPoints}",
+                i, _options.EndOfGamePoints, player.Score);
+        }
+
+        int minScore = _players.Min(player => player.Score);
+        for (int i = 0; i < _players.Count; i++)
+        {
+            HeartsPlayer player = _players[i];
+            if (player.Score != minScore)
+                continue;
+            _logger.LogInformation("The player at position {PlayerPosition} is the winner with {TotalPoints}!", i, player.Score);
+        }
     }
 
     public sealed class Options
