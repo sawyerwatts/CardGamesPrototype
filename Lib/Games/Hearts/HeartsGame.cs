@@ -19,7 +19,7 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 // TODO: have a Players : IList<Player> w/ a method to concurrently apply op to all players?
 //      have func to play out trick/op, starting with a specific player?
 
-// TODO: have a hand funcs? order by rank then suit, and order by suit then rank
+// TODO: have hand sort funcs? order by rank then suit, and order by suit then rank
 //      ace low vs high
 //      make an actual hand type?
 
@@ -69,28 +69,43 @@ public sealed class HeartsGame : IGame
                 throw new InvalidOperationException(
                     $"Could not find a player with the {nameof(TwoOfClubs)}");
 
-            // TODO: play first trick: no points can be played this trick!
-            //      use linq to inject the valid cards that could be specified?
-            //          Player would basically just become IPlayer
-            //      may need to *actually* implement the Spec pattern since points are game-specific
-            //          unless willing to have game bounce selection back to human player?
-
             bool hasHeartsBeenBroken = false;
+            (iCurrPlayer, hasHeartsBeenBroken) =
+                await PlayTrick(iCurrPlayer, hasHeartsBeenBroken, cancellationToken);
+
             while (_players[0].PeakCards.Count > 0)
             {
-                // TODO: play a non-first trick
-                //      ask iCurrPlayer for a card to begin trick
-                //          hearts cannot be lead until broken!
-                //      move clockwise around players for their card in the trick
-                //          players must follow suit if they can
-                //      whoever has the highest card in the suit takes the trick and becomes iCurrPlayer
-                //          ace is high!
+                (iCurrPlayer, hasHeartsBeenBroken) =
+                    await PlayTrick(iCurrPlayer, hasHeartsBeenBroken, cancellationToken);
             }
 
             // TODO: count points accrued in tricks (watch out for shooting the moon!)
         }
 
         _logger.LogInformation("Completed a game of Hearts");
+    }
+
+    private Task<(int iNewCurrPlayer, bool hasHeartsBeenBroken)> PlayTrick(
+        int iCurrPlayer,
+        bool hasHeartsBeenBroken,
+        CancellationToken cancellationToken)
+    {
+        // TODO: this
+        //      - if first trick, iCurrPlayer must play 2clubs
+        //      - else, ask iCurrPlayer for a card to begin trick
+        //          hearts cannot be lead until broken!
+        //      move clockwise around players for their card in the trick
+        //          players must follow suit if they can
+        //          if hearts is broken, track that
+        //          if first trick, no points can be played this trick!
+        //      whoever has the highest card in the suit takes the trick and becomes iCurrPlayer
+        //          ace is high!
+
+        // TODO: impl ideas
+        //      pass linq or specs to player?
+        //      how best determine b/w first/non-first tricks?
+
+        throw new NotImplementedException();
     }
 
     private async Task SetupRound(PassDirection passDirection, CancellationToken cancellationToken)
@@ -115,7 +130,8 @@ public sealed class HeartsGame : IGame
         List<Task<Cards<HeartsCard>>> takeCardsFromPlayerTasks = new(capacity: NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
         {
-            Task<Cards<HeartsCard>> task = _players[i].RemoveCards<HeartsCard>(PlayerSpecRemove3Cards, cancellationToken);
+            Task<Cards<HeartsCard>> task = _players[i]
+                .RemoveCards<HeartsCard>(PlayerSpecRemove3Cards, cancellationToken);
             takeCardsFromPlayerTasks.Add(task);
         }
 
