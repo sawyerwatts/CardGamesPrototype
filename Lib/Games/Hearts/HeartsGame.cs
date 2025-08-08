@@ -69,13 +69,6 @@ public sealed class HeartsGame : IGame
                 throw new InvalidOperationException(
                     $"Could not find a player with the {nameof(TwoOfClubs)}");
 
-            // TODO: pointing/specification design
-            //      have a HeartsDeck w/ HeartsCard
-            //      then use IDealer to shuffle/cut/deal that deck
-            //      and manage the hands internally
-            //      and use Player to communicate with players via here's your whole hand, choose one of these cards
-            //      also have DeckHandTrick.cs? or just use lists?
-
             // TODO: play first trick
             //      no points can be played this trick!
             //          how attribute points?
