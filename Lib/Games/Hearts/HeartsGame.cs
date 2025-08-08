@@ -203,7 +203,7 @@ public sealed class HeartsGame : IGame
             for (int i = 0; i < roundScores.Count; i++)
             {
                 if (i != iPlayerShotTheMoon)
-                    roundScores
+                    roundScores[i] = score;
             }
             return;
         }
