@@ -10,38 +10,45 @@ public interface IDealer
     /// <remarks>
     /// This may or may not mutate the supplied <paramref name="deck"/>.
     /// </remarks>
-    List<Cards> ShuffleCutDeal(Cards deck, int numHands);
+    List<Cards<TCard>> ShuffleCutDeal<TCard>(Cards<TCard> deck, int numHands)
+        where TCard : Card;
 
     /// <remarks>
     /// This may or may not mutate the supplied <paramref name="deck"/>.
     /// </remarks>
-    Cards Shuffle(Cards deck);
+    Cards<TCard> Shuffle<TCard>(Cards<TCard> deck)
+        where TCard : Card;
 
     /// <remarks>
     /// This may or may not mutate the supplied <paramref name="deck"/>.
     /// </remarks>
-    Cards Cut(Cards deck, int minNumCardsFromEdges = 1);
+    Cards<TCard> Cut<TCard>(Cards<TCard> deck, int minNumCardsFromEdges = 1)
+        where TCard : Card;
 
-    List<Cards> Deal(Cards deck, int numHands);
+    List<Cards<TCard>> Deal<TCard>(Cards<TCard> deck, int numHands)
+        where TCard : Card;
 }
 
 public sealed class Dealer(Dealer.IRng rng, ILogger<Dealer> logger) : IDealer
 {
-    public List<Cards> ShuffleCutDeal(Cards deck, int numHands)
+    public List<Cards<TCard>> ShuffleCutDeal<TCard>(Cards<TCard> deck, int numHands)
+        where TCard : Card
     {
-        Cards shuffled = Shuffle(deck);
-        Cards cut = Cut(shuffled);
+        Cards<TCard> shuffled = Shuffle(deck);
+        Cards<TCard> cut = Cut(shuffled);
         return Deal(cut, numHands);
     }
 
-    public Cards Shuffle(Cards deck)
+    public Cards<TCard> Shuffle<TCard>(Cards<TCard> deck)
+        where TCard : Card
     {
         logger.LogInformation("Shuffling the deck");
         rng.Shuffle(CollectionsMarshal.AsSpan(deck));
         return deck;
     }
 
-    public Cards Cut(Cards deck, int minNumCardsFromEdges = 1)
+    public Cards<TCard> Cut<TCard>(Cards<TCard> deck, int minNumCardsFromEdges = 1)
+        where TCard : Card
     {
         logger.LogInformation(
             "Cutting the deck with the cut occurring at least {MinNumCardsFromEdges} cards from the top and bottom",
@@ -66,27 +73,28 @@ public sealed class Dealer(Dealer.IRng rng, ILogger<Dealer> logger) : IDealer
                 $"The deck is too small to cut while not cutting the top or bottom {minNumCardsFromEdges}");
         }
 
-        IEnumerable<Card> cardsBelowAndAtCut = deck.Take(newTopCardIndex + 1);
-        IEnumerable<Card> cardsAboveCut = deck.Skip(newTopCardIndex + 1);
-        Cards newCards = new(capacity: deck.Count);
+        IEnumerable<TCard> cardsBelowAndAtCut = deck.Take(newTopCardIndex + 1);
+        IEnumerable<TCard> cardsAboveCut = deck.Skip(newTopCardIndex + 1);
+        Cards<TCard> newCards = new(capacity: deck.Count);
         newCards.AddRange(cardsAboveCut);
         newCards.AddRange(cardsBelowAndAtCut);
         return newCards;
     }
 
-    public List<Cards> Deal(Cards deck, int numHands)
+    public List<Cards<TCard>> Deal<TCard>(Cards<TCard> deck, int numHands)
+        where TCard : Card
     {
         logger.LogInformation("Dealing the deck to {NumHands} hands", numHands);
         if (numHands < 1)
             throw new ArgumentException(
                 $"{nameof(numHands)} must be positive but given {numHands}");
 
-        List<Cards> hands = new(capacity: numHands);
+        List<Cards<TCard>> hands = new(capacity: numHands);
         for (int i = 0; i < numHands; i++)
             hands.Add([]);
 
         CircularCounter iCurrHand = new(numHands);
-        foreach (Card currCard in deck)
+        foreach (TCard currCard in deck)
         {
             hands[iCurrHand.N].Add(currCard);
             iCurrHand.Tick();

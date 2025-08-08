@@ -29,16 +29,19 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 
 public sealed class HeartsGame : IGame
 {
-    public sealed class Factory(IDealer dealer, ILogger<HeartsGame> logger)
-    {
-        public HeartsGame Make(List<Player> players) => new HeartsGame(dealer, players, logger);
-    }
-
     private const int NumPlayers = 4;
-    private readonly List<HeartsPlayer> _players = new(capacity: NumPlayers);
-
+    private readonly List<HeartsPlayer> _players;
     private readonly IDealer _dealer;
     private readonly ILogger<HeartsGame> _logger;
+
+    private static readonly Player.RemoveCardsSpec PlayerSpecRemove3Cards = new(
+        MinCardsToRemove: 3,
+        MaxCardsToRemove: 3);
+
+    public sealed class Factory(IDealer dealer, ILogger<HeartsGame> logger)
+    {
+        public HeartsGame Make(List<Player> players) => new(dealer, players, logger);
+    }
 
     private HeartsGame(IDealer dealer, List<Player> players, ILogger<HeartsGame> logger)
     {
@@ -47,14 +50,10 @@ public sealed class HeartsGame : IGame
         if (players.Count != NumPlayers)
             throw new ArgumentException(
                 $"Hearts requires exactly {NumPlayers} players, but given {players.Count}");
-
+        _players = new List<HeartsPlayer>(capacity: NumPlayers);
         foreach (Player player in players)
             _players.Add(new HeartsPlayer(player));
     }
-
-    private static readonly Player.RemoveCardsSpec PlayerSpecRemove3Cards = new(
-        MinCardsToRemove: 3,
-        MaxCardsToRemove: 3);
 
     public async Task Play(CancellationToken cancellationToken)
     {
@@ -102,7 +101,10 @@ public sealed class HeartsGame : IGame
     {
         _logger.LogInformation("Shuffling, cutting, and dealing the deck to {NumPlayers}",
             NumPlayers);
-        List<Cards> hands = _dealer.ShuffleCutDeal(new HeartsCards(Decks.Standard52()), NumPlayers);
+        // TODO: could preserve and reshuffle cards instead of reinstantiating every round
+        List<Cards<HeartsCard>> hands = _dealer.ShuffleCutDeal(
+            deck: HeartsCard.MakeDeck(Decks.Standard52()),
+            numHands: NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
             await _players[i].SetHand(hands[i], cancellationToken);
 
@@ -114,10 +116,10 @@ public sealed class HeartsGame : IGame
 
         _logger.LogInformation("Asking each player to select three cards to pass {PassDirection}",
             passDirection);
-        List<Task<Cards>> takeCardsFromPlayerTasks = new(capacity: NumPlayers);
+        List<Task<Cards<HeartsCard>>> takeCardsFromPlayerTasks = new(capacity: NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
         {
-            Task<Cards> task = _players[i].RemoveCards(PlayerSpecRemove3Cards, cancellationToken);
+            Task<Cards<HeartsCard>> task = _players[i].RemoveCards<HeartsCard>(PlayerSpecRemove3Cards, cancellationToken);
             takeCardsFromPlayerTasks.Add(task);
         }
 
@@ -137,7 +139,7 @@ public sealed class HeartsGame : IGame
                     $"Passing {passDirection} from {nameof(iSourcePlayer)} {iSourcePlayer}"),
             };
 
-            Cards cardsToPass = takeCardsFromPlayerTasks[iSourcePlayer].Result;
+            Cards<HeartsCard> cardsToPass = takeCardsFromPlayerTasks[iSourcePlayer].Result;
             Task task = _players[iTargetPlayer].GiveCards(cardsToPass, cancellationToken);
             giveCardsToPlayerTasks.Add(task);
         }

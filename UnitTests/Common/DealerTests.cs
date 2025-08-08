@@ -18,7 +18,7 @@ public sealed class DealerTests
     [Fact]
     public void TestCut()
     {
-        Cards deck = new(
+        Cards<Card> deck = Card.MakeDeck(
         [
             Joker0.Instance,
             AceOfHearts.Instance,
@@ -35,7 +35,7 @@ public sealed class DealerTests
         _rng.GetInt32Value = 3;
         deck = _dealer.Cut(deck);
 
-        Cards expectedDeck = new(
+        Cards<Card> expectedDeck = Card.MakeDeck(
         [
             FourOfHearts.Instance,
             FiveOfHearts.Instance,
@@ -54,8 +54,8 @@ public sealed class DealerTests
     [Fact]
     public void TestShuffle()
     {
-        Cards deck = Decks.Standard52();
-        Cards prevDeck = new(deck);
+        Cards<Card> deck = Card.MakeDeck(Decks.Standard52());
+        Cards<Card> prevDeck = new(deck);
 
         int numChangedDecks = 0;
         for (int i = 0; i < 5; i++)
@@ -63,7 +63,7 @@ public sealed class DealerTests
             deck = _dealer.Shuffle(deck);
             if (!deck.Matches(prevDeck))
                 numChangedDecks++;
-            prevDeck = new Cards(deck);
+            prevDeck = new Cards<Card>(deck);
         }
 
         Assert.True(numChangedDecks > 3);
@@ -72,7 +72,7 @@ public sealed class DealerTests
     [Fact]
     public void TestDeal()
     {
-        Cards deck = new(
+        Cards<Card> deck = Card.MakeDeck(
         [
             Joker0.Instance,
             AceOfHearts.Instance,
@@ -86,33 +86,33 @@ public sealed class DealerTests
             NineOfHearts.Instance,
         ]);
 
-        Cards expectedHand0 = new(
+        Cards<Card> expectedHand0 = Card.MakeDeck(
         [
             Joker0.Instance,
             FourOfHearts.Instance,
             EightOfHearts.Instance,
         ]);
 
-        Cards expectedHand1 = new(
+        Cards<Card> expectedHand1 = Card.MakeDeck(
         [
             AceOfHearts.Instance,
             FiveOfHearts.Instance,
             NineOfHearts.Instance,
         ]);
 
-        Cards expectedHand2 = new(
+        Cards<Card> expectedHand2 = Card.MakeDeck(
         [
             TwoOfHearts.Instance,
             SixOfHearts.Instance,
         ]);
 
-        Cards expectedHand3 = new(
+        Cards<Card> expectedHand3 = Card.MakeDeck(
         [
             ThreeOfHearts.Instance,
             SevenOfHearts.Instance,
         ]);
 
-        List<Cards> hands = _dealer.Deal(deck, 4);
+        List<Cards<Card>> hands = _dealer.Deal(deck, 4);
         Assert.Equal(4, hands.Count);
         Assert.True(expectedHand0.Matches(hands[0]));
         Assert.True(expectedHand1.Matches(hands[1]));

@@ -2,7 +2,7 @@ namespace CardGamesPrototype.Lib.Common;
 
 public static class Decks
 {
-    public static Cards Standard52() => new Cards(
+    public static List<CardValue> Standard52() => new(
     [
         AceOfHearts.Instance,
         TwoOfHearts.Instance,
@@ -61,7 +61,7 @@ public static class Decks
         KingOfClubs.Instance,
     ]);
 
-    public static Cards Standard54() => new Cards(
+    public static List<CardValue> Standard54() => new(
     [
         Joker0.Instance,
         Joker1.Instance,

@@ -5,24 +5,24 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 public sealed class HeartsPlayer(Player player) : Player
 {
     public int Score { get; set; } = 0;
-    public List<HeartsCards> TricksTakenThisRound { get; set; } = [];
+    public List<Cards<HeartsCard>> TricksTakenThisRound { get; set; } = [];
 
-    public override Task SetHand(Cards hand, CancellationToken cancellationToken)
+    public override Task SetHand<T>(Cards<T> hand, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override Task GiveCards(Cards cards, CancellationToken cancellationToken)
+    public override Task GiveCards<T>(Cards<T> cards, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override Task<CardValue> RemoveCard(RemoveCardSpec spec, CancellationToken cancellationToken)
+    public override Task<CardValue> RemoveCard<T>(RemoveCardSpec spec, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }
 
-    public override Task<Cards> RemoveCards(RemoveCardsSpec spec, CancellationToken cancellationToken)
+    public override Task<Cards<T>> RemoveCards<T>(RemoveCardsSpec spec, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();
     }

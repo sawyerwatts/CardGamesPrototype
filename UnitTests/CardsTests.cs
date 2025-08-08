@@ -7,14 +7,14 @@ public class CardsTests
     [Fact]
     public void TestMatchesWhenEqual()
     {
-        Cards deck = new(
+        Cards<Card> deck = Card.MakeDeck(
         [
             Joker0.Instance,
             AceOfSpades.Instance,
             NineOfHearts.Instance,
         ]);
 
-        Cards unexpectedDeck = new(
+        Cards<Card> unexpectedDeck = Card.MakeDeck(
         [
             Joker0.Instance,
             AceOfSpades.Instance,
@@ -27,14 +27,14 @@ public class CardsTests
     [Fact]
     public void TestMatchesWhenNotEqual()
     {
-        Cards deck = new(
+        Cards<Card> deck = Card.MakeDeck(
         [
             Joker0.Instance,
             AceOfSpades.Instance,
             NineOfHearts.Instance,
         ]);
 
-        Cards unexpectedDeck = new(
+        Cards<Card> unexpectedDeck = Card.MakeDeck(
         [
             NineOfHearts.Instance,
             AceOfSpades.Instance,
