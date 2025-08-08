@@ -2,10 +2,13 @@ namespace CardGamesPrototype.Lib.Common;
 
 // TODO: mv to own file
 // TODO: having an AI implementation would be slick
+//      even if they just randomly select a valid HeartsCard, then could play the game
 //      would be cool if it counted cards too
 public interface IPlayerInterface
 {
 }
+
+// TODO: a player name would be cool too
 
 // TODO: attaching error messages to the validation(s) when they eval to false would be slick (that
 //      might just be the spec pattern)

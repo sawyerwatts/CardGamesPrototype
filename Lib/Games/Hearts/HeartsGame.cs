@@ -16,8 +16,6 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 
 // TODO: make a separate IPlayerInterface and leave this as purely concrete?
 
-// TODO: a player name would be cool too
-
 // TODO: put try/catch inside game whileLoop so if any excs occur, can continue the game?
 
 // TODO: have hand sort funcs? order by rank then suit, and order by suit then rank
@@ -79,10 +77,50 @@ public sealed class HeartsGame : IGame
             if (_players.Any(player => player.PeakHand.Any()))
                 throw new InvalidOperationException("Some players have cards left despite the 0th player having none");
 
-            // TODO: count points accrued in tricks (watch out for shooting the moon!)
+            List<int> roundScores = new(capacity: NumPlayers);
+            foreach (HeartsPlayer heartsPlayer in _players)
+            {
+                int roundScore = heartsPlayer.TricksTakenThisRound.Sum(trickCards => trickCards.Sum(card => card.Points));
+                roundScores.Add(roundScore);
+            }
+
+            if (roundScores.Count(score => score == 0) == 3)
+            {
+                int iPlayerShotTheMoon = roundScores.FindIndex(score => score != 0);
+                _logger.LogInformation("Player at position {PlayerPosition} shot the moon!", iPlayerShotTheMoon);
+            }
+            else
+            {
+                for (int i = 0; i < roundScores.Count; i++)
+                {
+                    _players[i].Score += roundScores[i];
+                    _logger.LogInformation("Player at position {PlayerPosition} scored {RoundPoints} point(s) this round", i, roundScores[i]);
+                }
+            }
+
+            for (int i = 0; i < _players.Count; i++)
+                _logger.LogInformation("Player at position {PlayerPosition} has a total of {TotalPoints} point(s)", i, _players[i].Score);
         }
 
-        _logger.LogInformation("Completed a game of Hearts");
+        for (int i = 0; i < _players.Count; i++)
+        {
+            HeartsPlayer player = _players[i];
+            if (player.Score < _options.EndOfGamePoints)
+                continue;
+            _logger.LogInformation("The player at position {PlayerPosition} is at or over {EndOfGamePoints} points with {TotalPoints}",
+                i, _options.EndOfGamePoints, player.Score);
+        }
+
+        int minScore = _players.Min(player => player.Score);
+        for (int i = 0; i < _players.Count; i++)
+        {
+            HeartsPlayer player = _players[i];
+            if (player.Score != minScore)
+                continue;
+            _logger.LogInformation("The player at position {PlayerPosition} is the winner with {TotalPoints}!", i, player.Score);
+        }
+
+        _logger.LogInformation("Completed the game of hearts");
     }
 
     private async Task<(int iNewCurrPlayer, bool isHeartsBroken)> PlayOutTrick(
