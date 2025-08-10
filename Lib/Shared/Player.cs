@@ -1,4 +1,4 @@
-namespace CardGamesPrototype.Lib.Common;
+namespace CardGamesPrototype.Lib.Shared;
 
 // TODO: mv to own file
 // TODO: having an AI implementation would be slick

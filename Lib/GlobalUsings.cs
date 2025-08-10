@@ -1,1 +1,1 @@
-global using CardGamesPrototype.Lib.Common;
+global using CardGamesPrototype.Lib.Shared;

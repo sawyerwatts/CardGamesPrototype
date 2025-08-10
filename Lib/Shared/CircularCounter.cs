@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace CardGamesPrototype.Lib.Common;
+namespace CardGamesPrototype.Lib.Shared;
 
 public record struct CircularCounter
 {

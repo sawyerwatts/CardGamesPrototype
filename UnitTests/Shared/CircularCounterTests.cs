@@ -1,6 +1,6 @@
-using CardGamesPrototype.Lib.Common;
+using CardGamesPrototype.Lib.Shared;
 
-namespace CardGamesPrototype.UnitTests.Common;
+namespace CardGamesPrototype.UnitTests.Shared;
 
 public class CircularCounterTests
 {

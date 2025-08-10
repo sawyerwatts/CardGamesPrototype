@@ -1,4 +1,4 @@
-namespace CardGamesPrototype.Lib.Common;
+namespace CardGamesPrototype.Lib.Shared;
 
 public sealed record Joker0          : CardValue { public readonly static Joker0          Instance = new(); private Joker0()          : base(Rank.Joker0, Suit.Joker) { } }
 public sealed record Joker1          : CardValue { public readonly static Joker1          Instance = new(); private Joker1()          : base(Rank.Joker1, Suit.Joker) { } }

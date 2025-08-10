@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 
 using Microsoft.Extensions.Logging;
 
-namespace CardGamesPrototype.Lib.Common;
+namespace CardGamesPrototype.Lib.Shared;
 
 public interface IDealer
 {

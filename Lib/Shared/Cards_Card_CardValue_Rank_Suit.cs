@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace CardGamesPrototype.Lib.Common;
+namespace CardGamesPrototype.Lib.Shared;
 
 public class Cards<TCard> : List<TCard>
     where TCard : Card

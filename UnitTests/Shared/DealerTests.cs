@@ -1,8 +1,8 @@
-using CardGamesPrototype.Lib.Common;
+using CardGamesPrototype.Lib.Shared;
 
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace CardGamesPrototype.UnitTests.Common;
+namespace CardGamesPrototype.UnitTests.Shared;
 
 public sealed class DealerTests
 {

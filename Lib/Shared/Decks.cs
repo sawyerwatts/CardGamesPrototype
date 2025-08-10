@@ -1,4 +1,4 @@
-namespace CardGamesPrototype.Lib.Common;
+namespace CardGamesPrototype.Lib.Shared;
 
 public static class Decks
 {
