@@ -1,11 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
-using System.Reflection.Metadata.Ecma335;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
+
+// TODO: playing hearts
+//      UI of some kind
+//      basic game AI so can play against something
 
 // TODO: have a Players : IList<Player> w/ a method to concurrently apply op to all players?
 //      have func to play out trick/op, starting with a specific player?
