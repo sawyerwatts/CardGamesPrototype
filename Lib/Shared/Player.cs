@@ -1,12 +1,8 @@
+using Microsoft.Extensions.Logging;
+
 namespace CardGamesPrototype.Lib.Shared;
 
-// TODO: mv to own file
-// TODO: having an AI implementation would be slick
-//      even if they just randomly select a valid HeartsCard, then could play the game
-//      would be cool if it counted cards too
-public interface IPlayerInterface
-{
-}
+// TODO: the divide b/w Player and IPlayerInterface is a lil awkward, esp around the hand ownership.
 
 // TODO: a player name would be cool too
 
@@ -19,24 +15,29 @@ public interface IPlayerInterface
 /// validating the inputs returned by <see name="IPlayerInterface"/>.
 /// </summary>
 /// <typeparam name="TCard"></typeparam>
-public class Player<TCard>(IPlayerInterface playerInterface)
+public class Player<TCard>(IPlayerInterface<TCard> playerInterface, ILogger<Player<TCard>> logger)
     where TCard : Card
 {
     public IEnumerable<CardValue> PeakHand => _hand.Select(card => card.Value);
 
     private Cards<TCard> _hand = [];
 
-    public Task GiveCards(Cards<TCard> cards, CancellationToken cancellationToken)
+    public async Task GiveCards(Cards<TCard> cards, CancellationToken cancellationToken)
     {
+        logger.LogInformation("Giving cards to player");
         _hand.AddRange(cards);
-        return Task.CompletedTask;
+        await playerInterface.GiveCards(cards, cancellationToken);
+        logger.LogInformation("Gave cards to player");
     }
 
-    public Task<Cards<TCard>> ClearHand(CancellationToken cancellationToken)
+    public async Task<Cards<TCard>> ClearHand(CancellationToken cancellationToken)
     {
+        logger.LogInformation("Clearing player's hand");
         Cards<TCard> hand = _hand;
         _hand = [];
-        return Task.FromResult(hand);
+        await playerInterface.ClearHand(cancellationToken);
+        logger.LogInformation("Cleared player's hand");
+        return hand;
     }
 
     /// <summary>
@@ -47,10 +48,22 @@ public class Player<TCard>(IPlayerInterface playerInterface)
     /// </param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
-    public Task<TCard> PlayCard(Func<Cards<TCard>, int, bool> validateChosenCard, CancellationToken cancellationToken)
+    public async Task<TCard> PlayCard(Func<Cards<TCard>, int, bool> validateChosenCard, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        bool validCardToPlay = false;
+        int iCardToPlay = -1;
+        while (!validCardToPlay)
+        {
+            iCardToPlay = -1;
+            while (iCardToPlay < 0 || iCardToPlay >= _hand.Count)
+                iCardToPlay = await playerInterface.PromptForIndexOfCardToPlay(_hand, cancellationToken);
+
+            validCardToPlay = validateChosenCard(_hand, iCardToPlay);
+        }
+
+        TCard cardToPlay = _hand[iCardToPlay];
+        _hand.RemoveAt(iCardToPlay);
+        return cardToPlay;
     }
 
     /// <summary>
@@ -61,7 +74,6 @@ public class Player<TCard>(IPlayerInterface playerInterface)
     /// </param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    /// <exception cref="NotImplementedException"></exception>
     public Task<Cards<TCard>> PlayCards(Func<Cards<TCard>, List<int>, bool> validateChosenCards, CancellationToken cancellationToken)
     {
         throw new NotImplementedException();

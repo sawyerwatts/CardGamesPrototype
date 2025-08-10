@@ -1,6 +1,9 @@
+using Microsoft.Extensions.Logging;
+
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
-public sealed class HeartsPlayer(IPlayerInterface playerInterface) : Player<HeartsCard>(playerInterface)
+public sealed class HeartsPlayer(IPlayerInterface<HeartsCard> playerInterface, ILogger<HeartsPlayer> logger)
+    : Player<HeartsCard>(playerInterface, logger)
 {
     public int Score { get; set; } = 0;
     public List<Cards<HeartsCard>> TricksTakenThisRound { get; set; } = [];

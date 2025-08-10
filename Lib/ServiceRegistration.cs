@@ -11,22 +11,13 @@ public static class ServiceRegistration
 
     public static void RegisterCardGameServices(this IHostApplicationBuilder builder)
     {
-        builder.RegisterCommonServices();
-        builder.RegisterHeartsGame();
+        builder.RegisterSharedServices();
+        builder.RegisterHeartsGame(GamesConfigPrefix);
     }
 
-    private static void RegisterCommonServices(this IHostApplicationBuilder builder)
+    private static void RegisterSharedServices(this IHostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<IDealer, Dealer>();
         builder.Services.AddSingleton<Dealer.IRng, Dealer.Rng>();
-    }
-
-    private static void RegisterHeartsGame(this IHostApplicationBuilder builder)
-    {
-        builder.Services.AddSingleton<HeartsGame.Factory>();
-        builder.Services.AddOptions<HeartsGame.Options>()
-            .BindConfiguration($"{GamesConfigPrefix}:Hearts")
-            .ValidateDataAnnotations()
-            .ValidateOnStart();
     }
 }

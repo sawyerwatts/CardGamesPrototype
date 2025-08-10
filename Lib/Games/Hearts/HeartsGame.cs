@@ -8,10 +8,12 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 
 // TODO: playing hearts
 //      UI of some kind
-//      basic game AI so can play against something
+
+// TODO: there's an uncomfortable degree of separation of game logic and card/issue communication with the player
 
 // TODO: have a Players : IList<Player> w/ a method to concurrently apply op to all players?
 //      have func to play out trick/op, starting with a specific player?
+//      could be useful in notifying other players of a change
 
 // TODO: Chimera would be a fun one to implement
 //      similar to ichu, The Great Dalmuti, Big Two, and Beat the Landlord
