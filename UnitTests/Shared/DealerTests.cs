@@ -1,5 +1,3 @@
-using CardGamesPrototype.Lib.Shared;
-
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace CardGamesPrototype.UnitTests.Shared;

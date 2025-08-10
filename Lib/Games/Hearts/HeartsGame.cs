@@ -54,10 +54,10 @@ public sealed class HeartsGame : IGame
     public async Task Play(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting a game of Hearts");
-        CircularCounter cardPassingDirection = new(4, startAtEnd: true);
+        CircularCounter dealerPosition = new(4, startAtEnd: true);
         while (_players.All(player => player.Score < _options.EndOfGamePoints))
         {
-            await SetupRound((PassDirection)cardPassingDirection.Tick(), cancellationToken);
+            await SetupRound((PassDirection)dealerPosition.Tick(), cancellationToken);
 
             int iTrickStartPlayer = _players.FindIndex(player =>
                 player.PeakHand.Any(cardValue => cardValue is TwoOfClubs));
@@ -139,7 +139,7 @@ public sealed class HeartsGame : IGame
         _logger.LogInformation("Hands are finalized");
     }
 
-    private async Task<(int iNewCurrPlayer, bool isHeartsBroken)> PlayOutTrick(
+    private async Task<(int iNextTrickStartPlayer, bool isHeartsBroken)> PlayOutTrick(
         bool isFirstTrick,
         int iTrickStartPlayer,
         bool isHeartsBroken,
@@ -153,15 +153,17 @@ public sealed class HeartsGame : IGame
                 : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
             cancellationToken);
         _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, openingCard.Value);
-
         Cards<HeartsCard> trick = new(capacity: NumPlayers) { openingCard };
+        Suit suitToFollow = openingCard.Value.Suit;
+
         while (iTrickPlayer.CycleClockwise() != iTrickStartPlayer)
         {
             _logger.LogInformation("Getting trick's next card from player at position {PlayerPosition}", iTrickPlayer.N);
             HeartsCard chosenCard = await _players[iTrickPlayer.N].PlayCard(
-                validateChosenCard: (hand, iCardToPlay) => CheckPlayedCard.EnsureTrickSuitIsFollowedIfPossible(trick, hand, iCardToPlay) && isFirstTrick
-                    ? hand[iCardToPlay].Points == 0
-                    : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
+                validateChosenCard: (hand, iCardToPlay) =>
+                    CheckPlayedCard.EnsureSuitIsFollowedIfPossible(suitToFollow, hand, iCardToPlay) && isFirstTrick
+                        ? hand[iCardToPlay].Points == 0
+                        : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
                 cancellationToken);
             trick.Add(chosenCard);
             _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, chosenCard.Value);
@@ -176,13 +178,17 @@ public sealed class HeartsGame : IGame
         if (trick.Count != NumPlayers)
             throw new InvalidOperationException($"After playing a trick, the trick has {trick.Count} cards but expected {NumPlayers} cards");
 
-        // TODO: this
-        //      whoever has the highest card in the suit takes the trick and becomes iCurrPlayer
-        //          ace is high!
-        int iNewCurrPlayer = -1; // TODO: this
-        _logger.LogInformation("Player at position {PlayerPosition} took the trick", iNewCurrPlayer);
+        IEnumerable<HeartsCard> onSuitCards = trick.Where(card => card.Value.Suit == suitToFollow);
+        Rank highestOnSuitRank = GetHighest.Of(HeartsRankPriorities.Value, onSuitCards.Select(card => card.Value.Rank).ToList());
+        int iTrickTakerOffsetFromStartPlayer = trick.FindIndex(card => card.Value.Suit == suitToFollow && card.Value.Rank == highestOnSuitRank);
+        if (iTrickTakerOffsetFromStartPlayer == -1)
+            throw new InvalidOperationException($"Could not find a card in the trick with suit {suitToFollow} and rank {highestOnSuitRank}");
+        int iNextTrickStartPlayer = new CircularCounter(seed: iTrickStartPlayer, maxExclusive: NumPlayers)
+            .Tick(delta: iTrickTakerOffsetFromStartPlayer);
+        _logger.LogInformation("Player at position {PlayerPosition} took the trick with {Card}", iNextTrickStartPlayer,
+            trick[iTrickTakerOffsetFromStartPlayer]);
 
-        return (iNewCurrPlayer, isHeartsBroken);
+        return (iNextTrickStartPlayer, isHeartsBroken);
     }
 
     private void ScoreTricks()
@@ -205,6 +211,7 @@ public sealed class HeartsGame : IGame
                 if (i != iPlayerShotTheMoon)
                     roundScores[i] = score;
             }
+
             return;
         }
 
