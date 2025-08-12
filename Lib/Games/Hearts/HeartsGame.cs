@@ -6,9 +6,6 @@ using Microsoft.Extensions.Options;
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
-// TODO: playing hearts
-//      UI of some kind
-
 // TODO: there's an uncomfortable degree of separation of game logic and card/issue communication with the player
 
 // TODO: have a Players : IList<Player> w/ a method to concurrently apply op to all players?
@@ -19,14 +16,6 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 //      similar to ichu, The Great Dalmuti, Big Two, and Beat the Landlord
 //      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
 //      have a deal func that knows how many hands to deal to, and the optional max capacity of those hands? and/or a priority of the hands to deal to?
-
-// TODO: make a separate IPlayerInterface and leave this as purely concrete?
-
-// TODO: put try/catch inside game whileLoop so if any excs occur, can continue the game?
-
-// TODO: have hand sort funcs? order by rank then suit, and order by suit then rank
-//      ace low vs high
-//      make an actual hand type?
 
 // TODO: how communicate outputs to players? not just a logger, right?
 

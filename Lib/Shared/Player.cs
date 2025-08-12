@@ -26,8 +26,7 @@ public class Player<TCard>(IPlayerInterface<TCard> playerInterface, ILogger<Play
     {
         logger.LogInformation("Giving cards to player");
         _hand.AddRange(cards);
-        await playerInterface.GiveCards(cards, cancellationToken);
-        logger.LogInformation("Gave cards to player");
+        await playerInterface.DisplayCards(cards, cancellationToken);
     }
 
     public async Task<Cards<TCard>> ClearHand(CancellationToken cancellationToken)
@@ -36,7 +35,6 @@ public class Player<TCard>(IPlayerInterface<TCard> playerInterface, ILogger<Play
         Cards<TCard> hand = _hand;
         _hand = [];
         await playerInterface.ClearHand(cancellationToken);
-        logger.LogInformation("Cleared player's hand");
         return hand;
     }
 

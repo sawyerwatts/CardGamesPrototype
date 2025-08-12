@@ -4,7 +4,7 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 
 public class HeartsAi : IPlayerInterface<HeartsCard>
 {
-    public Task GiveCards(Cards<HeartsCard> cards, CancellationToken cancellationToken)
+    public Task DisplayCards(Cards<HeartsCard> cards, CancellationToken cancellationToken)
     {
         return Task.CompletedTask;
     }

@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGamesPrototype.Lib", "L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGamesPrototype.UnitTests", "UnitTests\CardGamesPrototype.UnitTests.csproj", "{A4BE358A-92FC-4A90-8900-B3ED37ECB8CF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGamesPrototype.Cli", "Cli\CardGamesPrototype.Cli.csproj", "{A9391E1A-9EF0-49B6-9B6A-3F62BF96D30D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{A4BE358A-92FC-4A90-8900-B3ED37ECB8CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4BE358A-92FC-4A90-8900-B3ED37ECB8CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A4BE358A-92FC-4A90-8900-B3ED37ECB8CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9391E1A-9EF0-49B6-9B6A-3F62BF96D30D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9391E1A-9EF0-49B6-9B6A-3F62BF96D30D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9391E1A-9EF0-49B6-9B6A-3F62BF96D30D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9391E1A-9EF0-49B6-9B6A-3F62BF96D30D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -7,4 +7,9 @@ public sealed class HeartsPlayer(IPlayerInterface<HeartsCard> playerInterface, I
 {
     public int Score { get; set; } = 0;
     public List<Cards<HeartsCard>> TricksTakenThisRound { get; set; } = [];
+
+    public class Factory(ILogger<HeartsPlayer> logger)
+    {
+        public HeartsPlayer Make(IPlayerInterface<HeartsCard> playerInterface) => new HeartsPlayer(playerInterface, logger);
+    }
 }

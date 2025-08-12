@@ -3,7 +3,7 @@ namespace CardGamesPrototype.Lib.Shared;
 public interface IPlayerInterface<TCard>
     where TCard : Card
 {
-    Task GiveCards(Cards<TCard> cards, CancellationToken cancellationToken);
+    Task DisplayCards(Cards<TCard> cards, CancellationToken cancellationToken);
 
     Task ClearHand(CancellationToken cancellationToken);
 

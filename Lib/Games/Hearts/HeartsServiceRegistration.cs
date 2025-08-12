@@ -13,6 +13,8 @@ public static class HeartsServiceRegistration
             .ValidateDataAnnotations()
             .ValidateOnStart();
 
+        builder.Services.AddSingleton<HeartsPlayer.Factory>();
+
         builder.Services.AddTransient<HeartsAi>();
     }
 }
