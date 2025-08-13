@@ -13,6 +13,8 @@ public class Driver(
     {
         while (!cancellationToken.IsCancellationRequested)
         {
+            string playerName = AnsiConsole.Prompt(new TextPrompt<string>("What is your name?"));
+
             string gameName = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("What game do you want to play?")
@@ -30,10 +32,10 @@ public class Driver(
 
             HeartsGame game = services.GetRequiredService<HeartsGame.Factory>().Make(
             [
-                playerFactory.Make(playerInterface),
-                playerFactory.Make(services.GetRequiredService<HeartsAi>()),
-                playerFactory.Make(services.GetRequiredService<HeartsAi>()),
-                playerFactory.Make(services.GetRequiredService<HeartsAi>()),
+                playerFactory.Make(playerName, playerInterface),
+                playerFactory.Make("AI 0", services.GetRequiredService<HeartsAi>()),
+                playerFactory.Make("AI 1", services.GetRequiredService<HeartsAi>()),
+                playerFactory.Make("AI 2", services.GetRequiredService<HeartsAi>()),
             ]);
 
             await game.Play(cancellationToken);

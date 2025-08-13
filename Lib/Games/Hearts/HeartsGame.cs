@@ -140,19 +140,22 @@ public sealed class HeartsGame : IGame
         CancellationToken cancellationToken)
     {
         CircularCounter iTrickPlayer = new(iTrickStartPlayer);
-        _logger.LogInformation("Getting trick's opening card from player at position {PlayerPosition}", iTrickPlayer.N);
+        _logger.LogInformation("Getting trick's opening card from player {Name} (position {PlayerPosition})", _players[iTrickPlayer.N].Name,
+            iTrickPlayer.N);
         HeartsCard openingCard = await _players[iTrickStartPlayer].PlayCard(
             validateChosenCard: (hand, iCardToPlay) => isFirstTrick
                 ? hand[iCardToPlay].Value is TwoOfClubs
                 : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
             cancellationToken);
-        _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, openingCard.Value);
+        _logger.LogInformation("Player {Name} (position {PlayerPosition}) played {CardValue}", _players[iTrickPlayer.N].Name, iTrickPlayer.N,
+            openingCard.Value);
         Cards<HeartsCard> trick = new(capacity: NumPlayers) { openingCard };
         Suit suitToFollow = openingCard.Value.Suit;
 
         while (iTrickPlayer.CycleClockwise() != iTrickStartPlayer)
         {
-            _logger.LogInformation("Getting trick's next card from player at position {PlayerPosition}", iTrickPlayer.N);
+            _logger.LogInformation("Getting trick's next card from player {Name} (position {PlayerPosition})", _players[iTrickPlayer.N].Name,
+                iTrickPlayer.N);
             HeartsCard chosenCard = await _players[iTrickPlayer.N].PlayCard(
                 validateChosenCard: (hand, iCardToPlay) =>
                     CheckPlayedCard.EnsureSuitIsFollowedIfPossible(suitToFollow, hand, iCardToPlay) && isFirstTrick
@@ -160,7 +163,8 @@ public sealed class HeartsGame : IGame
                         : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
                 cancellationToken);
             trick.Add(chosenCard);
-            _logger.LogInformation("Player at position {PlayerPosition} played {CardValue}", iTrickPlayer.N, chosenCard.Value);
+            _logger.LogInformation("Player {Name} (position {PlayerPosition}) played {CardValue}", _players[iTrickPlayer.N].Name, iTrickPlayer.N,
+                chosenCard.Value);
 
             if (!isHeartsBroken && chosenCard.Value.Suit is Suit.Hearts)
             {
@@ -179,8 +183,8 @@ public sealed class HeartsGame : IGame
             throw new InvalidOperationException($"Could not find a card in the trick with suit {suitToFollow} and rank {highestOnSuitRank}");
         int iNextTrickStartPlayer = new CircularCounter(seed: iTrickStartPlayer, maxExclusive: NumPlayers)
             .Tick(delta: iTrickTakerOffsetFromStartPlayer);
-        _logger.LogInformation("Player at position {PlayerPosition} took the trick with {Card}", iNextTrickStartPlayer,
-            trick[iTrickTakerOffsetFromStartPlayer]);
+        _logger.LogInformation("Player {Name} (position {PlayerPosition}) took the trick with {Card}", _players[iTrickPlayer.N].Name,
+            iNextTrickStartPlayer, trick[iTrickTakerOffsetFromStartPlayer]);
 
         return (iNextTrickStartPlayer, isHeartsBroken);
     }
@@ -198,7 +202,7 @@ public sealed class HeartsGame : IGame
         if (roundScores.Count(score => score == 0) == 3)
         {
             int iPlayerShotTheMoon = roundScores.FindIndex(score => score != 0);
-            _logger.LogInformation("Player at position {PlayerPosition} shot the moon!", iPlayerShotTheMoon);
+            _logger.LogInformation("Player {Name} (position {PlayerPosition}) shot the moon!", _players[iPlayerShotTheMoon].Name, iPlayerShotTheMoon);
             int score = roundScores[iPlayerShotTheMoon];
             for (int i = 0; i < roundScores.Count; i++)
             {
@@ -213,8 +217,8 @@ public sealed class HeartsGame : IGame
         {
             _players[i].Score += roundScores[i];
             _logger.LogInformation(
-                "Player at position {PlayerPosition} scored {RoundPoints} point(s) this round and has a total of {TotalPoints} point(s)", i,
-                roundScores[i], _players[i].Score);
+                "Player {Name} (position {PlayerPosition}) scored {RoundPoints} point(s) this round and has a total of {TotalPoints} point(s)", i,
+                _players[i].Name, roundScores[i], _players[i].Score);
         }
     }
 
@@ -225,8 +229,8 @@ public sealed class HeartsGame : IGame
             HeartsPlayer player = _players[i];
             if (player.Score < _options.EndOfGamePoints)
                 continue;
-            _logger.LogInformation("The player at position {PlayerPosition} is at or over {EndOfGamePoints} points with {TotalPoints}",
-                i, _options.EndOfGamePoints, player.Score);
+            _logger.LogInformation("Player {Name} (position {PlayerPosition}) is at or over {EndOfGamePoints} points with {TotalPoints}",
+                player.Name, i, _options.EndOfGamePoints, player.Score);
         }
 
         int minScore = _players.Min(player => player.Score);
@@ -235,7 +239,7 @@ public sealed class HeartsGame : IGame
             HeartsPlayer player = _players[i];
             if (player.Score != minScore)
                 continue;
-            _logger.LogInformation("The player at position {PlayerPosition} is the winner with {TotalPoints}!", i, player.Score);
+            _logger.LogInformation("Player {Name} (position {PlayerPosition}) is the winner with {TotalPoints}!", player.Name, i, player.Score);
         }
     }
 

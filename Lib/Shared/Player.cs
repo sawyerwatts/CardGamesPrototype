@@ -4,8 +4,6 @@ namespace CardGamesPrototype.Lib.Shared;
 
 // TODO: the divide b/w Player and IPlayerInterface is a lil awkward, esp around the hand ownership.
 
-// TODO: a player name would be cool too
-
 // TODO: attaching error messages to the validation(s) when they eval to false would be slick (that
 //      might just be the spec pattern)
 //      impl one of the validation types?
@@ -15,23 +13,25 @@ namespace CardGamesPrototype.Lib.Shared;
 /// validating the inputs returned by <see name="IPlayerInterface"/>.
 /// </summary>
 /// <typeparam name="TCard"></typeparam>
-public class Player<TCard>(IPlayerInterface<TCard> playerInterface, ILogger<Player<TCard>> logger)
+public class Player<TCard>(string name, IPlayerInterface<TCard> playerInterface, ILogger<Player<TCard>> logger)
     where TCard : Card
 {
+    public string Name => name;
+
     public IEnumerable<CardValue> PeakHand => _hand.Select(card => card.Value);
 
     private Cards<TCard> _hand = [];
 
     public async Task GiveCards(Cards<TCard> cards, CancellationToken cancellationToken)
     {
-        logger.LogInformation("Giving cards to player");
+        logger.LogInformation("Giving cards to player {Name}", Name);
         _hand.AddRange(cards);
         await playerInterface.DisplayCards(cards, cancellationToken);
     }
 
     public async Task<Cards<TCard>> ClearHand(CancellationToken cancellationToken)
     {
-        logger.LogInformation("Clearing player's hand");
+        logger.LogInformation("Clearing the hand of player {Name}", Name);
         Cards<TCard> hand = _hand;
         _hand = [];
         await playerInterface.ClearHand(cancellationToken);
