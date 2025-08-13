@@ -18,25 +18,7 @@ public class Player<TCard>(string name, IPlayerInterface<TCard> playerInterface,
 {
     public string Name => name;
 
-    public IEnumerable<CardValue> PeakHand => _hand.Select(card => card.Value);
-
-    private Cards<TCard> _hand = [];
-
-    public async Task GiveCards(Cards<TCard> cards, CancellationToken cancellationToken)
-    {
-        logger.LogInformation("Giving cards to player {Name}", Name);
-        _hand.AddRange(cards);
-        await playerInterface.DisplayCards(cards, cancellationToken);
-    }
-
-    public async Task<Cards<TCard>> ClearHand(CancellationToken cancellationToken)
-    {
-        logger.LogInformation("Clearing the hand of player {Name}", Name);
-        Cards<TCard> hand = _hand;
-        _hand = [];
-        await playerInterface.ClearHand(cancellationToken);
-        return hand;
-    }
+    public Cards<TCard> Hand { get; set; } = [];
 
     /// <summary>
     /// </summary>
@@ -53,14 +35,14 @@ public class Player<TCard>(string name, IPlayerInterface<TCard> playerInterface,
         while (!validCardToPlay)
         {
             iCardToPlay = -1;
-            while (iCardToPlay < 0 || iCardToPlay >= _hand.Count)
-                iCardToPlay = await playerInterface.PromptForIndexOfCardToPlay(_hand, cancellationToken);
+            while (iCardToPlay < 0 || iCardToPlay >= Hand.Count)
+                iCardToPlay = await playerInterface.PromptForIndexOfCardToPlay(Hand, cancellationToken);
 
-            validCardToPlay = validateChosenCard(_hand, iCardToPlay);
+            validCardToPlay = validateChosenCard(Hand, iCardToPlay);
         }
 
-        TCard cardToPlay = _hand[iCardToPlay];
-        _hand.RemoveAt(iCardToPlay);
+        TCard cardToPlay = Hand[iCardToPlay];
+        Hand.RemoveAt(iCardToPlay);
         return cardToPlay;
     }
 

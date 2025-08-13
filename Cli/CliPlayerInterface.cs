@@ -7,10 +7,6 @@ namespace CardGamesPrototype.Cli;
 public class CliPlayerInterface<TCard>(ILogger<CliPlayerInterface<TCard>> logger) : IPlayerInterface<TCard>
     where TCard : Card
 {
-    public Task DisplayCards(Cards<TCard> cards, CancellationToken cancellationToken) => Task.CompletedTask;
-
-    public Task ClearHand(CancellationToken cancellationToken) => Task.CompletedTask;
-
     public Task<int> PromptForIndexOfCardToPlay(Cards<TCard> cards, CancellationToken cancellationToken)
     {
         TCard cardToPlay = AnsiConsole.Prompt(

@@ -6,8 +6,6 @@ using Microsoft.Extensions.Options;
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
-// TODO: there's an uncomfortable degree of separation of game logic and card/issue communication with the player
-
 // TODO: have a Players : IList<Player> w/ a method to concurrently apply op to all players?
 //      have func to play out trick/op, starting with a specific player?
 //      could be useful in notifying other players of a change
@@ -54,7 +52,7 @@ public sealed class HeartsGame : IGame
             await SetupRound((PassDirection)dealerPosition.Tick(), cancellationToken);
 
             int iTrickStartPlayer = _players.FindIndex(player =>
-                player.PeakHand.Any(cardValue => cardValue is TwoOfClubs));
+                player.Hand.Any(card => card.Value is TwoOfClubs));
             if (iTrickStartPlayer == -1)
                 throw new InvalidOperationException(
                     $"Could not find a player with the {nameof(TwoOfClubs)}");
@@ -63,13 +61,13 @@ public sealed class HeartsGame : IGame
             (iTrickStartPlayer, isHeartsBroken) =
                 await PlayOutTrick(isFirstTrick: true, iTrickStartPlayer, isHeartsBroken, cancellationToken);
 
-            while (_players[0].PeakHand.Any())
+            while (_players[0].Hand.Any())
             {
                 (iTrickStartPlayer, isHeartsBroken) =
                     await PlayOutTrick(isFirstTrick: false, iTrickStartPlayer, isHeartsBroken, cancellationToken);
             }
 
-            if (_players.Any(player => player.PeakHand.Any()))
+            if (_players.Any(player => player.Hand.Any()))
                 throw new InvalidOperationException("Some players have cards left despite the 0th player having none");
 
             ScoreTricks();
@@ -89,7 +87,7 @@ public sealed class HeartsGame : IGame
             deck: HeartsCard.MakeDeck(Decks.Standard52()),
             numHands: NumPlayers);
         for (int i = 0; i < NumPlayers; i++)
-            await _players[i].GiveCards(hands[i], cancellationToken);
+            _players[i].Hand = hands[i];
 
         if (passDirection is PassDirection.Hold)
         {
@@ -111,7 +109,6 @@ public sealed class HeartsGame : IGame
         await Task.WhenAll(takeCardsFromPlayerTasks).WaitAsync(cancellationToken);
 
         _logger.LogInformation("Passing cards");
-        List<Task> giveCardsToPlayerTasks = new(capacity: NumPlayers);
         for (int iSourcePlayer = 0; iSourcePlayer < NumPlayers; iSourcePlayer++)
         {
             CircularCounter sourcePlayerPosition = new(iSourcePlayer, NumPlayers);
@@ -125,11 +122,9 @@ public sealed class HeartsGame : IGame
             };
 
             Cards<HeartsCard> cardsToPass = takeCardsFromPlayerTasks[iSourcePlayer].Result;
-            Task task = _players[iTargetPlayer].GiveCards(cardsToPass, cancellationToken);
-            giveCardsToPlayerTasks.Add(task);
+            _players[iTargetPlayer].Hand.AddRange(cardsToPass);
         }
 
-        await Task.WhenAll(giveCardsToPlayerTasks).WaitAsync(cancellationToken);
         _logger.LogInformation("Hands are finalized");
     }
 
