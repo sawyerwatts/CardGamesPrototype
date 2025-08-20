@@ -4,8 +4,6 @@ using Spectre.Console;
 
 namespace CardGamesPrototype.Cli;
 
-// TODO: need to actually impl the player methods to get many cards (since passing)
-
 // TODO: have an IGameFactory that has a key prop, then can inject all and run dynamically
 
 public class Driver(

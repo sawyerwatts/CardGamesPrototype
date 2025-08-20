@@ -6,13 +6,17 @@ public class HeartsAi : IPlayerInterface<HeartsCard>
 {
     public Task<int> PromptForIndexOfCardToPlay(Cards<HeartsCard> cards, CancellationToken cancellationToken)
     {
-        return Task.FromResult(RandomNumberGenerator.GetInt32(
-            fromInclusive: 0,
-            toExclusive: cards.Count));
+        return Task.FromResult(
+            RandomNumberGenerator.GetInt32(fromInclusive: 0, toExclusive: cards.Count));
     }
 
     public Task<List<int>> PromptForIndexesOfCardsToPlay(Cards<HeartsCard> cards, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return Task.FromResult<List<int>>(
+        [
+            RandomNumberGenerator.GetInt32(fromInclusive: 0, toExclusive: cards.Count),
+            RandomNumberGenerator.GetInt32(fromInclusive: 0, toExclusive: cards.Count),
+            RandomNumberGenerator.GetInt32(fromInclusive: 0, toExclusive: cards.Count),
+        ]);
     }
 }

@@ -67,6 +67,11 @@ public record Card(CardValue Value)
         Hidden = card.Hidden;
     }
 
+    public override string ToString()
+    {
+        return Value.ToString();
+    }
+
     public static Cards<Card> MakeDeck(IEnumerable<CardValue> seed) =>
         new(seed.Select(cardValue => new Card(cardValue)));
 }

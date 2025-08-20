@@ -34,9 +34,9 @@ public class Player<TCard>(string name, IPlayerInterface<TCard> playerInterface,
         int iCardToPlay = -1;
         while (!validCardToPlay)
         {
-            iCardToPlay = -1;
-            while (iCardToPlay < 0 || iCardToPlay >= Hand.Count)
-                iCardToPlay = await playerInterface.PromptForIndexOfCardToPlay(Hand, cancellationToken);
+            iCardToPlay = await playerInterface.PromptForIndexOfCardToPlay(Hand, cancellationToken);
+            if (iCardToPlay < 0 || iCardToPlay >= Hand.Count)
+                continue;
 
             validCardToPlay = validateChosenCard(Hand, iCardToPlay);
         }
@@ -54,8 +54,29 @@ public class Player<TCard>(string name, IPlayerInterface<TCard> playerInterface,
     /// </param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    public Task<Cards<TCard>> PlayCards(Func<Cards<TCard>, List<int>, bool> validateChosenCards, CancellationToken cancellationToken)
+    public async Task<Cards<TCard>> PlayCards(Func<Cards<TCard>, List<int>, bool> validateChosenCards, CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        bool validCardsToPlay = false;
+        List<int> iCardsToPlay = [];
+        while (!validCardsToPlay)
+        {
+            iCardsToPlay = await playerInterface.PromptForIndexesOfCardsToPlay(Hand, cancellationToken);
+            if (iCardsToPlay.Count != iCardsToPlay.Distinct().Count())
+                continue;
+
+            if (iCardsToPlay.Any(iCardToPlay => iCardToPlay < 0 || iCardToPlay >= Hand.Count))
+                continue;
+
+            validCardsToPlay = validateChosenCards(Hand, iCardsToPlay);
+        }
+
+        Cards<TCard> cardsToPlay = new(capacity: iCardsToPlay.Count);
+        foreach (int iCardToPlay in iCardsToPlay.OrderDescending())
+        {
+            cardsToPlay.Add(Hand[iCardToPlay]);
+            Hand.RemoveAt(iCardToPlay);
+        }
+
+        return cardsToPlay;
     }
 }
