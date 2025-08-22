@@ -15,6 +15,8 @@ namespace CardGamesPrototype.Lib.Games.Hearts;
 //      this would be a fun one, esp since it has non-standard shuffling/dealing/betting
 //      have a deal func that knows how many hands to deal to, and the optional max capacity of those hands? and/or a priority of the hands to deal to?
 
+// TODO: fuzzing, if not simulation testing all possible permutations of inputs, would be real fun
+
 // TODO: how communicate outputs to players? not just a logger, right?
 
 // TODO: save after every trick? after every card placement? only on req?
@@ -135,13 +137,25 @@ public sealed class HeartsGame : IGame
         CancellationToken cancellationToken)
     {
         CircularCounter iTrickPlayer = new(seed: iTrickStartPlayer, maxExclusive: NumPlayers);
-        _logger.LogInformation("Getting trick's opening card from player {Name} (position {PlayerPosition})", _players[iTrickPlayer.N].Name,
-            iTrickPlayer.N);
+        while (true)
+        {
+            _logger.LogInformation("Getting trick's opening card from player {Name} (position {PlayerPosition})", _players[iTrickPlayer.N].Name,
+                iTrickPlayer.N);
+            if (!isHeartsBroken && _players[iTrickStartPlayer].Hand.All(card => card.Value.Suit is Suit.Hearts))
+            {
+                _logger.LogInformation(
+                    "Hearts has not been broken and player {Name} (position {PlayerPosition}) only has hearts, skipping to the next player",
+                    _players[iTrickPlayer.N].Name, iTrickPlayer.N);
+                iTrickPlayer.CycleClockwise();
+            }
+            else
+                break;
+        }
+
         HeartsCard openingCard = await _players[iTrickStartPlayer].PlayCard(
             validateChosenCard: (hand, iCardToPlay) => isFirstTrick
                 ? hand[iCardToPlay].Value is TwoOfClubs
-                // BUG: if hearts aren't broken but only have hearts, skip trick opening to next player
-                : CheckPlayedHeartsCard.AreHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
+                : isHeartsBroken || hand[iCardToPlay].Value.Suit is not Suit.Hearts,
             cancellationToken);
         _logger.LogInformation("Player {Name} (position {PlayerPosition}) played {CardValue}", _players[iTrickPlayer.N].Name, iTrickPlayer.N,
             openingCard.Value);
@@ -154,9 +168,7 @@ public sealed class HeartsGame : IGame
                 iTrickPlayer.N);
             HeartsCard chosenCard = await _players[iTrickPlayer.N].PlayCard(
                 validateChosenCard: (hand, iCardToPlay) =>
-                    CheckPlayedCard.IsSuitFollowedIfPossibleElseTrue(suitToFollow, hand, iCardToPlay) && isFirstTrick
-                        ? hand[iCardToPlay].Points == 0
-                        : CheckPlayedHeartsCard.AreHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
+                    !CheckPlayedCard.IsSuitFollowedIfPossibleElseTrue(suitToFollow, hand, iCardToPlay) || !isFirstTrick || hand[iCardToPlay].Points == 0,
                 cancellationToken);
             trick.Add(chosenCard);
             _logger.LogInformation("Player {Name} (position {PlayerPosition}) played {CardValue}", _players[iTrickPlayer.N].Name, iTrickPlayer.N,
