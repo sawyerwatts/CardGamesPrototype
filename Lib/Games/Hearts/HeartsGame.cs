@@ -168,7 +168,13 @@ public sealed class HeartsGame : IGame
                 iTrickPlayer.N);
             HeartsCard chosenCard = await _players[iTrickPlayer.N].PlayCard(
                 validateChosenCard: (hand, iCardToPlay) =>
-                    !CheckPlayedCard.IsSuitFollowedIfPossibleElseTrue(suitToFollow, hand, iCardToPlay) || !isFirstTrick || hand[iCardToPlay].Points == 0,
+                {
+                    if (!CheckPlayedCard.IsSuitFollowedIfPossible(suitToFollow, hand, iCardToPlay))
+                        return false;
+                    if (isFirstTrick && hand[iCardToPlay].Points != 0)
+                        return false;
+                    return true;
+                },
                 cancellationToken);
             trick.Add(chosenCard);
             _logger.LogInformation("Player {Name} (position {PlayerPosition}) played {CardValue}", _players[iTrickPlayer.N].Name, iTrickPlayer.N,
@@ -191,9 +197,9 @@ public sealed class HeartsGame : IGame
             throw new InvalidOperationException($"Could not find a card in the trick with suit {suitToFollow} and rank {highestOnSuitRank}");
         int iNextTrickStartPlayer = new CircularCounter(seed: iTrickStartPlayer, maxExclusive: NumPlayers)
             .Tick(delta: iTrickTakerOffsetFromStartPlayer);
-        _logger.LogInformation("Player {Name} (position {PlayerPosition}) took the trick with {Card}", _players[iTrickPlayer.N].Name,
+        _logger.LogInformation("Player {Name} (position {PlayerPosition}) took the trick with {Card}", _players[iNextTrickStartPlayer].Name,
             iNextTrickStartPlayer, trick[iTrickTakerOffsetFromStartPlayer]);
-        _players[iTrickStartPlayer].TricksTakenThisRound.Add(trick);
+        _players[iNextTrickStartPlayer].TricksTakenThisRound.Add(trick);
 
         return (iNextTrickStartPlayer, isHeartsBroken);
     }

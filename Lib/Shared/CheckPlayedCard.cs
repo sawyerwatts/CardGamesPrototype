@@ -5,7 +5,7 @@ public static class CheckPlayedCard
     /// <summary>
     /// If the suit cannot be followed, this will return true.
     /// </summary>
-    public static bool IsSuitFollowedIfPossibleElseTrue<TCard>(Suit suitToFollow, Cards<TCard> playerHand,
+    public static bool IsSuitFollowedIfPossible<TCard>(Suit suitToFollow, Cards<TCard> playerHand,
         int iPlayerCardToPlay, Suit? bypassSuit = null)
         where TCard : Card
     {
