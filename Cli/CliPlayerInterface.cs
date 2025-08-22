@@ -17,8 +17,7 @@ public class CliPlayerInterface<TCard>(ILogger<CliPlayerInterface<TCard>> logger
                 .AddChoices(cards.ToArray()),
 #pragma warning restore CA1861
             cancellationToken);
-        // BUG: this always returns 0??
-        int iCardToPlay = cards.FindIndex(card => card.Equals(card));
+        int iCardToPlay = cards.FindIndex(card => card.Equals(cardToPlay));
         logger.LogInformation("Playing card {CardToPlay} at index {IndexCardToPlay}", cardToPlay, iCardToPlay);
         return iCardToPlay;
     }

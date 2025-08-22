@@ -134,7 +134,7 @@ public sealed class HeartsGame : IGame
         bool isHeartsBroken,
         CancellationToken cancellationToken)
     {
-        CircularCounter iTrickPlayer = new(iTrickStartPlayer);
+        CircularCounter iTrickPlayer = new(seed: iTrickStartPlayer, maxExclusive: NumPlayers);
         _logger.LogInformation("Getting trick's opening card from player {Name} (position {PlayerPosition})", _players[iTrickPlayer.N].Name,
             iTrickPlayer.N);
         HeartsCard openingCard = await _players[iTrickStartPlayer].PlayCard(
