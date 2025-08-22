@@ -193,6 +193,7 @@ public sealed class HeartsGame : IGame
             .Tick(delta: iTrickTakerOffsetFromStartPlayer);
         _logger.LogInformation("Player {Name} (position {PlayerPosition}) took the trick with {Card}", _players[iTrickPlayer.N].Name,
             iNextTrickStartPlayer, trick[iTrickTakerOffsetFromStartPlayer]);
+        _players[iTrickStartPlayer].TricksTakenThisRound.Add(trick);
 
         return (iNextTrickStartPlayer, isHeartsBroken);
     }
