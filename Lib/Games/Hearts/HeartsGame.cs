@@ -140,7 +140,8 @@ public sealed class HeartsGame : IGame
         HeartsCard openingCard = await _players[iTrickStartPlayer].PlayCard(
             validateChosenCard: (hand, iCardToPlay) => isFirstTrick
                 ? hand[iCardToPlay].Value is TwoOfClubs
-                : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
+                // BUG: if hearts aren't broken but only have hearts, skip trick opening to next player
+                : CheckPlayedHeartsCard.AreHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
             cancellationToken);
         _logger.LogInformation("Player {Name} (position {PlayerPosition}) played {CardValue}", _players[iTrickPlayer.N].Name, iTrickPlayer.N,
             openingCard.Value);
@@ -153,9 +154,9 @@ public sealed class HeartsGame : IGame
                 iTrickPlayer.N);
             HeartsCard chosenCard = await _players[iTrickPlayer.N].PlayCard(
                 validateChosenCard: (hand, iCardToPlay) =>
-                    CheckPlayedCard.EnsureSuitIsFollowedIfPossible(suitToFollow, hand, iCardToPlay) && isFirstTrick
+                    CheckPlayedCard.IsSuitFollowedIfPossibleElseTrue(suitToFollow, hand, iCardToPlay) && isFirstTrick
                         ? hand[iCardToPlay].Points == 0
-                        : CheckPlayedHeartsCard.EnsureHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
+                        : CheckPlayedHeartsCard.AreHeartsArePlayedOnlyAfterBeingBroken(isHeartsBroken, hand, iCardToPlay),
                 cancellationToken);
             trick.Add(chosenCard);
             _logger.LogInformation("Player {Name} (position {PlayerPosition}) played {CardValue}", _players[iTrickPlayer.N].Name, iTrickPlayer.N,

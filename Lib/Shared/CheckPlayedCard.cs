@@ -2,7 +2,10 @@ namespace CardGamesPrototype.Lib.Shared;
 
 public static class CheckPlayedCard
 {
-    public static bool EnsureSuitIsFollowedIfPossible<TCard>(Suit suitToFollow, Cards<TCard> playerHand,
+    /// <summary>
+    /// If the suit cannot be followed, this will return true.
+    /// </summary>
+    public static bool IsSuitFollowedIfPossibleElseTrue<TCard>(Suit suitToFollow, Cards<TCard> playerHand,
         int iPlayerCardToPlay, Suit? bypassSuit = null)
         where TCard : Card
     {
