@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
+// TODO: this class is hard to test as-written. If this wasn't a warm up to understand building card games, I would refactor this class to make it more testability.
+
 // TODO: have a Players : IList<Player> w/ a method to concurrently apply op to all players?
 //      have func to play out trick/op, starting with a specific player?
 //      could be useful in notifying other players of a change
