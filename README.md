@@ -60,14 +60,6 @@ could be:
 - utilize messaging, like have a messaging container injected into each component so they can send messages to all
   sibling components
 
-### Notes: Unity Game Objects
-
-Unity's `GameObject` is a Component implementation that reportedly has ECS support as well.
-
-https://unity.com/ecs
-
-https://docs.unity3d.com/Manual/GameObjects.html
-
 ## Notes: The Entity-Component-System (ECS) Pattern
 
 This section contains info and quotes from Austin
@@ -80,8 +72,8 @@ ECS builds off the Component pattern by having three major parts:
       object classes, like an entity type ID
 2. A component, which is a Plain Old Data (POD) struct containing data needed for a component's computation
     - This may also contain a component type ID
-    - This is primarily done for performance reasons. It is common every object's physics are determined, and then to be
-      drawn to the screen, by having a packed array of physics PODs, the goal is to minimize cache misses.
+    - This has performance perks. It is common every object's physics are determined, and then to be drawn to the screen,
+      by having a packed array of physics PODs, the goal is to minimize cache misses.
 3. A system, which "is any functionality that iterates upon a list of entities with [certain] components," like a system
    that applies animation and rendering components or a system that applies physics and collision components.
 
@@ -97,3 +89,33 @@ There are some other parts to the implementation discussed by Morlan:
 5. A system manager, which "is in charge of maintaining a record of registered systems and their signatures"
 6. The coordinator/welcome, which wires up all the managers and mediates this mess
 
+### Applied Example + Value Demo
+
+Here is an interesting quote from r/SeniorePlatypus:
+
+    The idea is to decouple data and processing. Allowing multiple systems to operate on the same components.
+
+    For example. I can have a transform component (storing position, rotation, etc.). A velocity component (storing angular
+    and linear velocity).
+
+    A physics system can now update the transform based on velocity. Nice and easy.
+
+    But now, if I want to have wind push stuff around I can just get all velocity components and apply a static value to
+    them. Effectively pushing things around. Without a new component. Without breaking any old code. Without even touching
+    any old code.
+
+    That is what's nice about ECS. Components, data itself acts as strongly defined interfaces between systems. You are able
+    to seamlessly add or remove systems at runtime. Anytime you have a bug you know it's gonna end up in the system
+    responsible for this feature. Anytime you need something extra, a new feature you can just write it. No touching or
+    integrating into other parts of the game.
+
+This details that an adv of ECS over just using Components is that it allows for this runtime registration of systems
+to operate on the same component.
+
+## Notes: Unity Game Objects
+
+Unity's `GameObject` is a Component implementation that reportedly has ECS support as well.
+
+https://docs.unity3d.com/Manual/GameObjects.html
+
+https://unity.com/ecs
