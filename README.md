@@ -91,7 +91,7 @@ There are some other parts to the implementation discussed by Morlan:
 
 ### Applied Example + Value Demo
 
-Here is an interesting quote from r/SeniorePlatypus:
+Here is interesting quote from r/SeniorePlatypus:
 
     The idea is to decouple data and processing. Allowing multiple systems to operate on the same components.
 
@@ -111,6 +111,20 @@ Here is an interesting quote from r/SeniorePlatypus:
 
 This details that an adv of ECS over just using Components is that it allows for this runtime registration of systems
 to operate on the same component.
+
+### System Interactions
+
+Here is a quote from r/ajvrgames demonstrating how systems can interact:
+
+    Your collision system would usually mark up colliding entities, and then separate systems would handle those collisions.
+
+    For instance, your collision system would mark an entity as having collided with another entity. A second system would
+    look for all entities marked as having health with collisions and test to see if the collider is damaging; a third
+    system might look for players with collisions and test to see if the collider is a monster, etc.
+
+    Alternatively, you might want to store collisions as entities themselves, so that each time you detect a collision you
+    create an entity with a collision component that references the two colliding entities. You can then handle these
+    entities like any other in collision-type-specific systems again.
 
 ## Notes: Unity Game Objects
 
