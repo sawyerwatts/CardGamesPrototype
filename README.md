@@ -38,3 +38,6 @@ interfacing code is the most awkward (possibly because I never do frontend work)
       updates, like if got disconnected and needed to replay?
     - Altho a god state object could have weird mutators causing bugs. Have the game state be immutable or
       otherwise lock down mutations to specific classes? This might be too much tho
+5. As a combo of previous ideas, have a `GameState` and a `ReadonlyGameState` for players (that also
+   applies the appropriate data authorization filtering)?
+
