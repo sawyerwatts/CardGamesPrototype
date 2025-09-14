@@ -7,7 +7,7 @@ public record struct CircularCounter
     public int N { get; private set; }
     private readonly int _maxExclusive;
 
-    public CircularCounter() => throw new NotImplementedException();
+    public CircularCounter() => throw new NotSupportedException();
 
     public CircularCounter(int maxExclusive, bool startAtEnd = false)
     {

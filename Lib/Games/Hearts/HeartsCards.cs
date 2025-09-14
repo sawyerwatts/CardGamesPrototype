@@ -1,7 +1,5 @@
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
-// TODO: how could I impl HeartsCard, HeartsCards, and HeartsPlayer w/o "inheritance"?
-
 public sealed record HeartsCard : Card
 {
     public int Points { get; }

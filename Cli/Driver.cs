@@ -29,12 +29,12 @@ public class Driver(
             );
             logger.LogInformation("Initializing {Game}", gameName);
 
-            CliPlayerInterface<HeartsCard> playerInterface = cliPlayerInterfaceFactory.Make<HeartsCard>();
+            CliPlayerPortal<HeartsCard> playerPortal = cliPlayerInterfaceFactory.Make<HeartsCard>();
             HeartsPlayer.Factory playerFactory = services.GetRequiredService<HeartsPlayer.Factory>();
 
             HeartsGame game = services.GetRequiredService<HeartsGame.Factory>().Make(
             [
-                playerFactory.Make(playerName, playerInterface),
+                playerFactory.Make(playerName, playerPortal),
                 playerFactory.Make("AI 0", services.GetRequiredService<HeartsAi>()),
                 playerFactory.Make("AI 1", services.GetRequiredService<HeartsAi>()),
                 playerFactory.Make("AI 2", services.GetRequiredService<HeartsAi>()),

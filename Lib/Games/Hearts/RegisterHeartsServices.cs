@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
-public static class HeartsServiceRegistration
+public static class RegisterHeartsServices
 {
     public static void RegisterHeartsGame(this IHostApplicationBuilder builder, string gamesSectionName)
     {

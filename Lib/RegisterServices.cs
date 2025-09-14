@@ -5,7 +5,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace CardGamesPrototype.Lib;
 
-public static class ServiceRegistration
+public static class RegisterServices
 {
     private const string GamesConfigPrefix = "Games";
 

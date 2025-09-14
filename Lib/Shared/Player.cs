@@ -2,7 +2,15 @@ using Microsoft.Extensions.Logging;
 
 namespace CardGamesPrototype.Lib.Shared;
 
-// TODO: the divide b/w Player and IPlayerInterface is a lil awkward, esp around the hand ownership.
+// TODO: the divide b/w Player and IPlayerPortal is a lil awkward, esp around the hand ownership.
+//      the player portal doesn't know the hand state unless it's being prompted for a card to play
+//      redesign
+//          HeartsGame takes abstract PlayerPortal, and PlayerPortal is injected w/ PlayerState or whatev
+
+// TODO: but what if we wanted to show the total points of all players?
+//      then we'd need to allow for public vs private game state
+//          some games will want to show how many cards others have, so hand.count would be public
+//      could also have ultra private for tricks taken and card counting
 
 // TODO: attaching error messages to the validation(s) when they eval to false would be slick (that
 //      might just be the spec pattern)
@@ -13,28 +21,25 @@ namespace CardGamesPrototype.Lib.Shared;
 /// validating the inputs returned by <see name="IPlayerInterface"/>.
 /// </summary>
 /// <typeparam name="TCard"></typeparam>
-public class Player<TCard>(string name, IPlayerInterface<TCard> playerInterface, ILogger<Player<TCard>> logger)
+public class Player<TCard>(string name, IPlayerPortal<TCard> playerPortal, ILogger<Player<TCard>> logger)
     where TCard : Card
 {
     public string Name => name;
 
     public Cards<TCard> Hand { get; set; } = [];
 
-    /// <summary>
-    /// </summary>
     /// <param name="validateChosenCard">
     /// This will take the current player hand and the pre-validated in-range index of the card to
     /// play, and return true iff it is valid to play that card.
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public async Task<TCard> PlayCard(Func<Cards<TCard>, int, bool> validateChosenCard, CancellationToken cancellationToken)
     {
         bool validCardToPlay = false;
         int iCardToPlay = -1;
         while (!validCardToPlay)
         {
-            iCardToPlay = await playerInterface.PromptForIndexOfCardToPlay(Hand, cancellationToken);
+            iCardToPlay = await playerPortal.PromptForIndexOfCardToPlay(Hand, cancellationToken);
             if (iCardToPlay < 0 || iCardToPlay >= Hand.Count)
                 continue;
 
@@ -46,21 +51,18 @@ public class Player<TCard>(string name, IPlayerInterface<TCard> playerInterface,
         return cardToPlay;
     }
 
-    /// <summary>
-    /// </summary>
     /// <param name="validateChosenCards">
     /// This will take the current player hand and the pre-validated in-range and unique indexes of
     /// the cards to play, and return true iff it is valid to play those cards.
     /// </param>
     /// <param name="cancellationToken"></param>
-    /// <returns></returns>
     public async Task<Cards<TCard>> PlayCards(Func<Cards<TCard>, List<int>, bool> validateChosenCards, CancellationToken cancellationToken)
     {
         bool validCardsToPlay = false;
         List<int> iCardsToPlay = [];
         while (!validCardsToPlay)
         {
-            iCardsToPlay = await playerInterface.PromptForIndexesOfCardsToPlay(Hand, cancellationToken);
+            iCardsToPlay = await playerPortal.PromptForIndexesOfCardsToPlay(Hand, cancellationToken);
             if (iCardsToPlay.Count != iCardsToPlay.Distinct().Count())
                 continue;
 

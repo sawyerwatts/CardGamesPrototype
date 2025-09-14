@@ -4,7 +4,7 @@ using Spectre.Console;
 
 namespace CardGamesPrototype.Cli;
 
-public class CliPlayerInterface<TCard>(ILogger<CliPlayerInterface<TCard>> logger) : IPlayerInterface<TCard>
+public class CliPlayerPortal<TCard>(ILogger<CliPlayerPortal<TCard>> logger) : IPlayerPortal<TCard>
     where TCard : Card
 {
     public async Task<int> PromptForIndexOfCardToPlay(Cards<TCard> cards, CancellationToken cancellationToken)
@@ -51,10 +51,10 @@ public class CliPlayerInterface<TCard>(ILogger<CliPlayerInterface<TCard>> logger
 
 public class CliPlayerInterfaceFactory(IServiceProvider services)
 {
-    public CliPlayerInterface<TCard> Make<TCard>()
+    public CliPlayerPortal<TCard> Make<TCard>()
         where TCard : Card
     {
-        var logger = services.GetRequiredService<ILogger<CliPlayerInterface<TCard>>>();
-        return new CliPlayerInterface<TCard>(logger);
+        var logger = services.GetRequiredService<ILogger<CliPlayerPortal<TCard>>>();
+        return new CliPlayerPortal<TCard>(logger);
     }
 }

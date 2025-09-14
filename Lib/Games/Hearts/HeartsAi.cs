@@ -2,7 +2,7 @@ using System.Security.Cryptography;
 
 namespace CardGamesPrototype.Lib.Games.Hearts;
 
-public class HeartsAi : IPlayerInterface<HeartsCard>
+public class HeartsAi : IPlayerPortal<HeartsCard>
 {
     public Task<int> PromptForIndexOfCardToPlay(Cards<HeartsCard> cards, CancellationToken cancellationToken)
     {
