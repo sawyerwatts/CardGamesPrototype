@@ -1,7 +1,7 @@
 # Card Games Prototype
 
 This repo is a prototype/warmup/prelude to a more robust card game solution. It exists to quickly familiarize myself
-coding card games.
+coding card games. The non-prototype repo is [CoolCardGames](https://github.com/sawyerwatts/CoolCardGames).
 
 The original plan was to make this prototype, then learn about the ECS architecture, and then rebuild the app using this
 architecture. However, now that
